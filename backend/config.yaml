@@ -1,0 +1,12 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "fimuver_user"
+  password: "fimuver_password"
+  database: "fimuver_db"
+  sslmode: "disable"
+

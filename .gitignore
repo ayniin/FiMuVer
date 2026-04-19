@@ -1,0 +1,42 @@
+# Go
+backend/bin/
+backend/dist/
+*.o
+*.a
+*.so
+
+# Dependencies
+backend/vendor/
+
+# Swagger Docs (werden regeneriert)
+backend/docs/
+backend/docs.go
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# Environment
+.env
+.env.local
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+Thumbs.db
+
