@@ -33,6 +33,41 @@ type Media struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
+type Movie struct {
+	ID          uint   `gorm:"primaryKey" json:"id"`
+	ImdbID      string `json:"imdb_id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	PosterPath  string `json:"poster_path"`
+	Runtime     string `json:"runtime"`
+	Genres      string `json:"genres"`
+	ReleaseDate string `json:"release_date"`
+	VoteAverage string `json:"vote_average"`
+}
+
+type Series struct {
+	ID             uint   `gorm:"primaryKey" json:"id"`
+	TvdbID         string `json:"tvdb_id"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	PosterPath     string `json:"poster_path"`
+	RuntimeAverage string `json:"runtime_average"`
+	Genres         string `json:"genres"`
+	ReleaseDate    string `json:"release_date"`
+	VoteAverage    string `json:"vote_average"`
+}
+
+type Person struct {
+	ID         uint   `gorm:"primaryKey" json:"id"`
+	ExternalID string `json:"external_id"`
+	Name       string `gorm:"index;not null" json:"name"`
+}
+
+type Band struct {
+	ID   uint   `gorm:"primaryKey" json:"id"`
+	Name string `gorm:"index;not null" json:"name"`
+}
+
 // TableName gibt den Namen der Tabelle für GORM an
 func (Media) TableName() string {
 	return "media"
