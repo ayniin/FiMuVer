@@ -1,53 +1,15 @@
+// Package models enthält alle Datenbankmodelle für FiMuVer
+// Jedes Model ist in einer separaten Datei organisiert für bessere Wartbarkeit.
+//
+// Models:
+// - user.go: Benutzer-Verwaltung
+// - collection.go: Sammlungen von Benutzern
+// - film.go: Film-Metadaten
+// - person.go: Regisseure, Schauspieler und andere Personen
+// - relationships.go: Many-to-Many Beziehungen (FilmActor, FilmGenre)
+// - reference_types.go: Referenztabellen (Genre, Edition, Label, MediaType, Condition)
+// - collection_item.go: Einzelne Kopien in einer Sammlung
 package models
-
-import (
-	"time"
-
-	"gorm.io/datatypes"
-)
-
-// MediaType definiert die verschiedenen Medientypen
-type MediaType string
-
-const (
-	MediaTypeBluray MediaType = "bluray"
-	MediaTypeDVD    MediaType = "dvd"
-	MediaTypeVinyl  MediaType = "vinyl"
-	MediaTypeTape   MediaType = "tape"
-)
-
-// Media repräsentiert ein Medium (Bluray, DVD, Vinyl, Tape)
-type Media struct {
-	ID          uint           `gorm:"primaryKey" json:"id"`
-	Title       string         `gorm:"index;not null" json:"title"`
-	Description string         `json:"description"`
-	MediaType   MediaType      `gorm:"type:varchar(20);not null" json:"media_type"`
-	Artist      string         `json:"artist"`   // Für Musik/Vinyl
-	Director    string         `json:"director"` // Für Filme
-	Year        int            `json:"year"`     // Erscheinungsjahr
-	Genre       string         `json:"genre"`
-	Condition   string         `json:"condition"` // z.B. "mint", "good", "fair", "poor"
-	Location    string         `json:"location"`  // Wo wird es aufbewahrt
-	Notes       datatypes.JSON `json:"notes"`     // JSON für flexible Metadaten
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-}
-
-type Movie struct {
-	ID          uint   `gorm:"primaryKey" json:"id"`
-	ImdbID      string `json:"imdb_id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	PosterPath  string `json:"poster_path"`
-	Runtime     string `json:"runtime"`
-	Genres      string `json:"genres"`
-	ReleaseDate string `json:"release_date"`
-	VoteAverage string `json:"vote_average"`
-}
-
-type Series struct {
-	ID             uint   `gorm:"primaryKey" json:"id"`
-	TvdbID         string `json:"tvdb_id"`
 	Title          string `json:"title"`
 	Description    string `json:"description"`
 	PosterPath     string `json:"poster_path"`
