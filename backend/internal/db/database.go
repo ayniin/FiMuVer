@@ -35,12 +35,20 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 // Media Repository Methoden
 
 // GetAllMedia holt alle Medien, optional gefiltert nach Typ
-func (d *Database) GetAllMedia(mediaType string) ([]models.Media, error) {
+func (d *Database) GetAllMedia(mediaType string, limit uint, offset uint) ([]models.Media, error) {
 	var media []models.Media
 	query := d.DB
 
 	if mediaType != "" {
 		query = query.Where("media_type = ?", mediaType)
+	}
+
+	if limit > 0 {
+		query = query.Limit(int(limit))
+	}
+
+	if offset > 0 {
+		query = query.Offset(int(offset))
 	}
 
 	if err := query.Order("created_at DESC").Find(&media).Error; err != nil {

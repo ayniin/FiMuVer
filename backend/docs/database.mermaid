@@ -1,0 +1,121 @@
+---
+title: FiMuVer Datenbankstruktur
+---
+erDiagram
+    USER ||--o{ COLLECTION : "owns"
+    COLLECTION ||--o{ COLLECTION_ITEM : "contains"
+    FILM ||--o{ COLLECTION_ITEM : "referenced_by"
+    PERSON ||--o{ FILM : "directs"
+    PERSON }o--o{ FILM : "acts_in"
+    EDITION ||--o{ COLLECTION_ITEM : "is_instance_of"
+    LABEL ||--o{ COLLECTION_ITEM : "has"
+    MEDIA_TYPE ||--o{ COLLECTION_ITEM : "is_of_type"
+    CONDITION ||--o{ COLLECTION_ITEM : "has"
+    GENRE ||--o{ FILM_GENRE : "has"
+    FILM ||--o{ FILM_GENRE : "categorized_by"
+    FILM ||--o{ FILM_ACTOR : "features"
+    PERSON ||--o{ FILM_ACTOR : "plays_in"
+    
+    %% Benutzer der Sammlung
+    USER {
+        int id PK
+        string email UK
+        string username UK
+        bool is_admin
+        timestamp created_at
+    }
+
+    %% Die Sammlung als Container
+    COLLECTION {
+        int id PK
+        int user_id FK
+        string name "z.B. My Blu-ray Collection"
+        string description
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Personen (Directors, Actors) - wiederverwendbar für zukünftige Content-Typen
+    PERSON {
+        int id PK
+        string name UK
+        date birth_date
+        string picture_path
+        string biography
+        string external_id "IMDb, TMDb ID"
+    }
+
+    %% Film-Metadaten (von IMDb, etc.)
+    FILM {
+        int id PK
+        string imdb_id UK
+        string title UK
+        string description
+        string poster_path
+        string runtime
+        string release_date
+        int year
+        string vote_average
+        int director_id FK "Primärer Director"
+    }
+
+    %% Schauspieler im Film (Many-to-Many)
+    FILM_ACTOR {
+        int id PK
+        int film_id FK
+        int person_id FK
+        string character_name "Rolle"
+    }
+
+    %% Einzelne physische Kopie in der Sammlung
+    COLLECTION_ITEM {
+        int id PK
+        int collection_id FK
+        int film_id FK
+        int edition_id FK
+        int label_id FK
+        int media_type_id FK
+        int condition_id FK
+        string location "Lagerlocation"
+        decimal purchase_price
+        date purchase_date
+        string notes "Notizen, Beschädigungen, etc."
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% Edition-Information (kritisch für Sammler!)
+    EDITION {
+        int id PK
+        string name "Steelbook|Limited|Collector's|Standard"
+    }
+
+    %% Label/Publisher
+    LABEL {
+        int id PK
+        string name "z.B. Warner Bros, Universal"
+    }
+
+    %% Medientyp - erweiterbar für zukünftige Content-Typen
+    MEDIA_TYPE {
+        int id PK
+        string name "Blu-ray|4K|DVD|Vinyl|Tape"
+    }
+
+    %% Zustandsbeschreibung
+    CONDITION {
+        int id PK
+        string name "Mint|Good|Fair|Poor"
+    }
+
+    GENRE {
+        int id PK
+        string name
+    }
+
+    FILM_GENRE {
+        int id PK
+        int film_id FK
+        int genre_id FK
+    }
+    

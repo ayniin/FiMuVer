@@ -22,6 +22,8 @@ func NewMediaHandler(database *db.Database) *MediaHandler {
 // Optional query parameter: ?type=bluray|dvd|vinyl|tape
 func (h *MediaHandler) GetAllMedia(c *gin.Context) {
 	mediaType := c.Query("type")
+	limit := c.Query("limit")
+	offset := c.Query("offset")
 
 	media, err := h.db.GetAllMedia(mediaType)
 	if err != nil {
