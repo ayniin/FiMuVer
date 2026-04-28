@@ -9,10 +9,11 @@ import (
 	"fimuver/internal/handlers"
 	"fimuver/internal/middleware"
 
+	_ "fimuver/docs"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "fimuver/docs"
 )
 
 func main() {
@@ -50,9 +51,26 @@ func main() {
 	collectionHandler := handlers.NewCollectionHandler(database)
 	collectionItemHandler := handlers.NewCollectionItemHandler(database)
 	referenceHandler := handlers.NewReferenceHandler(database)
+	userHandler := handlers.NewUserHandler(database)
+	settingsHandler := handlers.NewSettingsHandler(database)
 
 	api := router.Group("/api/v1")
 	{
+		// User Routes (Authentication/Registration)
+		users := api.Group("/users")
+		{
+			users.POST("", userHandler.AddUser)
+			users.GET("/:id", userHandler.GetUserByID)
+		}
+
+		// Settings Routes
+		settings := api.Group("/settings")
+		{
+			settings.GET("", settingsHandler.GetAllSettings)
+			settings.GET("/:name", settingsHandler.GetSettingByName)
+			settings.PUT("/:name", settingsHandler.UpdateSetting)
+			settings.DELETE("/:id", settingsHandler.DeleteSetting)
+		}
 		// Media Routes
 		media := api.Group("/media")
 		{
