@@ -47,9 +47,13 @@ func main() {
 
 	// API v1 Routes
 	mediaHandler := handlers.NewMediaHandler(database)
+	collectionHandler := handlers.NewCollectionHandler(database)
+	collectionItemHandler := handlers.NewCollectionItemHandler(database)
+	referenceHandler := handlers.NewReferenceHandler(database)
 
 	api := router.Group("/api/v1")
 	{
+		// Media Routes
 		media := api.Group("/media")
 		{
 			media.GET("", mediaHandler.GetAllMedia)
@@ -58,8 +62,47 @@ func main() {
 			media.PUT("/:id", mediaHandler.UpdateMedia)
 			media.DELETE("/:id", mediaHandler.DeleteMedia)
 		}
-
 		api.GET("/search", mediaHandler.SearchMedia)
+
+		// Collection Routes
+		collections := api.Group("/collections")
+		{
+			collections.GET("", collectionHandler.GetCollectionsByUser)
+			collections.POST("", collectionHandler.CreateCollection)
+			collections.GET("/:id", collectionHandler.GetCollectionByID)
+			collections.PUT("/:id", collectionHandler.UpdateCollection)
+			collections.DELETE("/:id", collectionHandler.DeleteCollection)
+
+			// Collection Items (nested)
+			collections.GET("/:collectionId/items", collectionItemHandler.GetCollectionItems)
+			collections.POST("/:collectionId/items", collectionItemHandler.CreateCollectionItem)
+			collections.PUT("/:collectionId/items/:itemId", collectionItemHandler.UpdateCollectionItem)
+			collections.DELETE("/:collectionId/items/:itemId", collectionItemHandler.DeleteCollectionItem)
+		}
+
+		// Reference Tables Routes
+		references := api.Group("/references")
+		{
+			// Genres
+			references.GET("/genres", referenceHandler.GetAllGenres)
+			references.POST("/genres", referenceHandler.CreateGenre)
+
+			// Media Types
+			references.GET("/media-types", referenceHandler.GetAllMediaTypes)
+			references.POST("/media-types", referenceHandler.CreateMediaType)
+
+			// Conditions
+			references.GET("/conditions", referenceHandler.GetAllConditions)
+			references.POST("/conditions", referenceHandler.CreateCondition)
+
+			// Editions
+			references.GET("/editions", referenceHandler.GetAllEditions)
+			references.POST("/editions", referenceHandler.CreateEdition)
+
+			// Labels
+			references.GET("/labels", referenceHandler.GetAllLabels)
+			references.POST("/labels", referenceHandler.CreateLabel)
+		}
 	}
 
 	// Server starten

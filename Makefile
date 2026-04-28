@@ -42,21 +42,21 @@ frontend-build:
 
 # Docker Commands
 docker-up:
-	docker-compose up -d
+	docker compose up -d
 	@echo "🚀 Services starten:"
 	@echo "Backend API: http://localhost:8080"
 	@echo "Frontend: http://localhost:5173"
 	@echo "pgAdmin: http://localhost:5050"
 
 docker-down:
-	docker-compose down
+	docker compose down
 
 docker-logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 docker-db-reset:
-	docker-compose down -v
-	docker-compose up -d postgres
+	docker compose down -v
+	docker compose up -d postgres
 
 # Development Commands
 install: backend-install frontend-install
@@ -77,7 +77,7 @@ clean:
 
 # Database Commands
 db-shell:
-	docker-compose exec postgres psql -U fimuver_user -d fimuver_db
+	docker compose exec postgres psql -U fimuver_user -d fimuver_db
 
 # Utility
 format:

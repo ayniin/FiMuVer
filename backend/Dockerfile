@@ -18,8 +18,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api
 # Final Stage
 FROM alpine:latest
 
-# Installiere ca-certificates für HTTPS
-RUN apk --no-cache add ca-certificates
+# Installiere ca-certificates für HTTPS mit Retry und DNS-Workaround
+RUN apk update && \
+    apk add --no-cache ca-certificates && \
+    rm -rf /var/cache/apk/* || \
+    (echo "Trying with different repository..." && \
+    sed -i 's/dl-cdn.alpinelinux.org/dl-4.alpinelinux.org/g' /etc/apk/repositories && \
+    apk add --no-cache ca-certificates)
 
 WORKDIR /root/
 
