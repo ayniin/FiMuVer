@@ -1,8 +1,17 @@
 .landing-container {
   min-height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
 }
 
 .landing-header {
@@ -12,8 +21,6 @@
 }
 
 .header-content {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -43,9 +50,6 @@
 
 .landing-main {
   flex: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
   width: 100%;
 }
 
@@ -53,6 +57,7 @@
   text-align: center;
   color: white;
   margin-bottom: 3rem;
+  padding: 3rem 2rem 2rem 2rem;
 }
 
 .welcome-section h2 {
@@ -69,6 +74,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
+  padding: 0 2rem 3rem 2rem;
 }
 
 .feature-card {

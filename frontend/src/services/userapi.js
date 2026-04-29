@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 class UserAPI {
     static async registerUser(username, email, password) {
@@ -10,7 +10,7 @@ class UserAPI {
             throw new Error('Das Passwort muss mindestens 12 Zeichen lang sein.');
         }
 
-        var body = JSON.stringify({ username, email, password });
+        const body = JSON.stringify({ username, email, password });
 
         try {
             const response = await fetch(`${API_BASE_URL}/users/register`, {
@@ -34,10 +34,7 @@ class UserAPI {
 
             console.log('Registrierungsantwort:', data);
 
-            // Speichere Benutzer im localStorage, falls vorhanden
-            if (data.data.token) {
-                localStorage.setItem('user', JSON.stringify(data));
-            }
+            this.saveUser(data.data);
 
             return data;
         } catch (error) {
@@ -64,10 +61,7 @@ class UserAPI {
             
             console.log('Login-Antwort:', data);
 
-            // Speichere Benutzer im localStorage, falls vorhanden
-            if (data.data.token) {
-                localStorage.setItem('user', JSON.stringify(data));
-            }
+            this.saveUser(data.data);
             
             return data;
         } catch (error) {
@@ -75,7 +69,16 @@ class UserAPI {
             throw error;
         }
     }
+
+    static async saveUser(data) {
+        localStorage.setItem('user', JSON.stringify(data));
+    }
 }
+
+export const getCurrentUser = () => {
+  const userStr = localStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
+};
 
 // Exportiere die Funktionen als benannte Exports für die Kompatibilität mit Auth.jsx
 export const registerUser = UserAPI.registerUser;
