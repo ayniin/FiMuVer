@@ -9,4 +9,4 @@
 // @host            localhost:8080
 // @basePath         /api/v1
 // @schemes         http
-package main
+package docs

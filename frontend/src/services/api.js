@@ -1,5 +1,20 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
+// Helper-Funktion für headers mit token
+const getHeaders = (additionalHeaders = {}) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...additionalHeaders,
+  };
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user?.token) {
+    headers['Authorization'] = `Bearer ${user.token}`;
+  }
+
+  return headers;
+};
+
 class MediaAPI {
   // Alle Medien abrufen (optional gefiltert nach Typ)
   static async getAllMedia(mediaType = null) {

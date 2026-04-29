@@ -62,6 +62,7 @@ func main() {
 	// API v1 Routes
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
+	collectionHandler := handlers.NewCollectionHandler(database)
 
 	api := router.Group("/api/v1")
 	{
@@ -75,7 +76,7 @@ func main() {
 		}
 	}
 
-	secure := api.Group("/")
+	secure := api.Group("")
 	secure.Use(middleware.JWTAuthMiddleware())
 	{
 		settings := secure.Group("/settings")
@@ -86,8 +87,12 @@ func main() {
 			settings.DELETE("/:id", settingsHandler.DeleteSetting)
 		}
 
-		// weitere geschützte Routen z.B. Collections, Items, etc.
-		// secure.GET("/collection", collectionHandler.List)
+		collections := secure.Group("/collections")
+		{
+			// GET /api/v1/collections -> returns collections for the authenticated user (user_id from JWT)
+			collections.GET("", collectionHandler.GetAllCollectionsForUser)
+			collections.POST("", collectionHandler.CreateCollection)
+		}
 	}
 
 	// Server starten
