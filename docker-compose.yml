@@ -21,8 +21,8 @@ services:
   # Go Backend API
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend  # Kontext auf das Backend-Verzeichnis setzen
+      dockerfile: Dockerfile
     container_name: fimuver-api
     environment:
       - DATABASE_HOST=postgres
@@ -35,9 +35,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
-    command: go run ./cmd/api/main.go
+    # Kein Volume-Mount für den Code im Production-Build, da er im Image ist
+    # command wird durch CMD im Dockerfile definiert
 
   # React Frontend (optional für Entwicklung)
   # Für Production: mit Nginx servieren

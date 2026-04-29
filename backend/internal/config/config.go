@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -21,9 +22,15 @@ type ServerConfig struct {
 	Host string `yaml:"host"`
 }
 
+type JWTConfig struct {
+	Secret string        `yaml:"secret"`
+	TTL    time.Duration `yaml:"ttl"`
+}
+
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	JWT      JWTConfig      `yaml:"jwt"`
 }
 
 // LoadConfig lädt die Konfiguration aus einer YAML-Datei
@@ -38,7 +45,24 @@ func LoadConfig(filepath string) (*Config, error) {
 		return nil, fmt.Errorf("fehler beim Parsen der YAML-Datei: %w", err)
 	}
 
-	// Standard-Werte setzen, falls nicht gesetzt
+	// Umgebungsvariablen auslesen und Konfiguration überschreiben (hat Vorrang)
+	if host := os.Getenv("DATABASE_HOST"); host != "" {
+		cfg.Database.Host = host
+	}
+	if port := os.Getenv("DATABASE_PORT"); port != "" {
+		fmt.Sscanf(port, "%d", &cfg.Database.Port)
+	}
+	if user := os.Getenv("DATABASE_USER"); user != "" {
+		cfg.Database.User = user
+	}
+	if password := os.Getenv("DATABASE_PASSWORD"); password != "" {
+		cfg.Database.Password = password
+	}
+	if dbname := os.Getenv("DATABASE_NAME"); dbname != "" {
+		cfg.Database.Database = dbname
+	}
+
+	// Standard-Werte setzen, falls weder in YAML noch in ENV gesetzt
 	if cfg.Server.Host == "" {
 		cfg.Server.Host = "localhost"
 	}
@@ -50,6 +74,13 @@ func LoadConfig(filepath string) (*Config, error) {
 	}
 	if cfg.Database.SSLMode == "" {
 		cfg.Database.SSLMode = "disable"
+	}
+
+	if jwtSecret := os.Getenv("JWT_SECRET"); jwtSecret != "" {
+		cfg.JWT.Secret = jwtSecret
+	}
+	if jwtTTL := os.Getenv("JWT_TTL"); jwtTTL != "" {
+		cfg.JWT.TTL, _ = time.ParseDuration(jwtTTL)
 	}
 
 	return &cfg, nil

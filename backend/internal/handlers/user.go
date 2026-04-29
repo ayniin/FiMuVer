@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
-
 	"fimuver/internal/db"
 	"fimuver/internal/models"
+	"fimuver/internal/services"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,11 +14,16 @@ type UserHandler struct {
 	db *db.Database
 }
 
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,min=3,max=50"`
+	Password string `json:"password" binding:"required,min=12,max=60"`
+}
+
 func NewUserHandler(database *db.Database) *UserHandler {
 	return &UserHandler{db: database}
 }
 
-// AddUser godoc
+// RegisterUser godoc
 // @Summary     Neuen Benutzer erstellen
 // @Description Erstellt einen neuen Benutzer im System
 // @Tags        User
@@ -30,7 +35,7 @@ func NewUserHandler(database *db.Database) *UserHandler {
 // @Failure     409 {object} map[string]string "Email oder Username bereits vorhanden"
 // @Failure     500 {object} map[string]string "Interner Fehler"
 // @Router      /users [post]
-func (h *UserHandler) AddUser(c *gin.Context) {
+func (h *UserHandler) RegisterUser(c *gin.Context) {
 	// 1. Bind JSON Request zu CreateUserRequest DTO
 	var req CreateUserRequest
 
@@ -86,13 +91,16 @@ func (h *UserHandler) AddUser(c *gin.Context) {
 	user := models.User{
 		Email:    req.Email,
 		Username: req.Username,
+		Password: req.Password,
 		IsAdmin:  false, // Neue User sind standardmäßig keine Admins
 	}
 
-	// 5. Speichere User in Datenbank (direkt mit GORM)
-	if err := h.db.DB.Create(&user).Error; err != nil {
+	var userService = services.NewUserService(h.db)
+
+	created, err := userService.CreateUser(user)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Fehler beim Erstellen des Benutzers: " + err.Error(),
+			"error": err.Error(),
 		})
 		return
 	}
@@ -101,10 +109,10 @@ func (h *UserHandler) AddUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Benutzer erfolgreich erstellt",
 		"data": gin.H{
-			"id":       user.ID,
-			"email":    user.Email,
-			"username": user.Username,
-			"is_admin": user.IsAdmin,
+			"id":       created.ID,
+			"email":    created.Email,
+			"username": created.Username,
+			"is_admin": created.IsAdmin,
 		},
 	})
 }
@@ -131,6 +139,32 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": user,
+	})
+}
+
+func (h *UserHandler) LoginUser(c *gin.Context) {
+	var userRequest LoginRequest
+	if err := c.ShouldBindJSON(&userRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{})
+	}
+
+	var userService = services.NewUserService(h.db)
+	user, token, err := userService.LoginUser(userRequest.Email, userRequest.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid login",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "login successful",
+		"data": gin.H{
+			"id": user.ID,
+			"email": user.Email,
+			"username": user.Username,
+			"token": token,
+		},
 	})
 }
 

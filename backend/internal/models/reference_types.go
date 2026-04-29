@@ -100,11 +100,10 @@ type Genre struct {
 	Name string `gorm:"not null;uniqueIndex" json:"name"`
 
 	// Beziehungen
-	FilmGenres []FilmGenre `gorm:"foreignKey:GenreID" json:"film_genres,omitempty"`
+	MovieGenres []MovieGenre `gorm:"foreignKey:GenreID" json:"movie_genres,omitempty"`
 }
 
 // TableName gibt den Namen der Tabelle für GORM an
 func (Genre) TableName() string {
 	return "genres"
 }
-

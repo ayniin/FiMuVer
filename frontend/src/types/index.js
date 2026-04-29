@@ -27,6 +27,13 @@ export const CONDITION_LABELS = {
   poor: 'Schlecht'
 };
 
+export const USER = {
+  id: null,
+  Email: '',
+  Username: '',
+  Password: ''
+}
+
 // API Response Types
 export class Media {
   id = null;

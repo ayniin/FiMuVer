@@ -42,7 +42,7 @@ frontend-build:
 
 # Docker Commands
 docker-up:
-	docker compose up -d
+	docker compose up -d --build
 	@echo "🚀 Services starten:"
 	@echo "Backend API: http://localhost:8080"
 	@echo "Frontend: http://localhost:5173"

@@ -33,9 +33,9 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		&models.Label{},
 		&models.MediaType{},
 		&models.Condition{},
-		&models.Film{},
-		&models.FilmGenre{},
-		&models.FilmActor{},
+		&models.Movie{},
+		&models.MovieGenre{},
+		&models.MovieActor{},
 		&models.Collection{},
 		&models.CollectionItem{},
 		&models.Settings{},
@@ -73,7 +73,6 @@ func seedDefaultSettings(db *gorm.DB) error {
 
 	return nil
 }
-
 
 // Close schließt die Datenbankverbindung
 func (d *Database) Close() error {

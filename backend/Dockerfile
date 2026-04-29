@@ -1,40 +1,39 @@
-# Multi-Stage Build für Go Backend
+# Stage 1: Builder
 FROM golang:1.25-alpine AS builder
 
+# Setze das Arbeitsverzeichnis im Container
 WORKDIR /app
 
-# Kopiere Go Module Files
-COPY backend/go.mod backend/go.sum ./
+# Kopiere go.mod und go.sum, um die Abhängigkeiten zu cachen
+COPY go.mod go.sum ./
 
-# Lade Dependencies
+# Lade die Abhängigkeiten herunter
 RUN go mod download
 
-# Kopiere Source Code
-COPY backend/ .
+# Kopiere den gesamten Quellcode des Backends
+COPY . .
 
-# Baue die Anwendung
-RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api
+# Baue die Go-Anwendung. CGO_ENABLED=0 erstellt ein statisches Binary.
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o api ./cmd/api
 
-# Final Stage
+# Stage 2: Finales Image
 FROM alpine:latest
 
-# Installiere ca-certificates für HTTPS mit Retry und DNS-Workaround
-RUN apk update && \
-    apk add --no-cache ca-certificates && \
-    rm -rf /var/cache/apk/* || \
-    (echo "Trying with different repository..." && \
-    sed -i 's/dl-cdn.alpinelinux.org/dl-4.alpinelinux.org/g' /etc/apk/repositories && \
-    apk add --no-cache ca-certificates)
+# Füge ca-certificates hinzu, um HTTPS-Verbindungen zu ermöglichen
+RUN apk --no-cache add ca-certificates
 
+# Setze das Arbeitsverzeichnis
 WORKDIR /root/
 
-# Kopiere die compilierte Anwendung aus dem Builder
+# Kopiere das kompilierte Binary aus dem Builder-Stage
 COPY --from=builder /app/api .
-COPY backend/config.yaml .
 
-# Expose Port
+# Kopiere die Konfigurationsdatei
+COPY config.yaml .
+
+# Expose Port 8080, auf dem die Anwendung läuft
 EXPOSE 8080
 
-# Starte die Anwendung
+# Definiere den Befehl zum Starten der Anwendung
 CMD ["./api"]
 
