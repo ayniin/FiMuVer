@@ -3,17 +3,17 @@ import './Landing.css';
 import { getCurrentUser } from '../services/userapi';
 import Header from '../components/Header';
 
-const Landing = ({ user, onLogout }) => {
+const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
   const currentUser = getCurrentUser();
   console.log('Aktueller Benutzer in Landing:', currentUser);
 
   return (
     <div className="landing-container">
-      <Header user={currentUser} onLogout={onLogout} />
+      <Header user={currentUser} onLogout={onLogout} onNavigateToAdmin={onNavigateToAdmin} />
 
       <main className="landing-main">
         <div className="welcome-section">
-          <h2>Willkommen, {currentUser?.data?.username || 'Benutzer'}!</h2>
+          <h2>Willkommen, {currentUser?.username || 'Benutzer'}!</h2>
           <p>Verwalte deine Mediensammlung ganz einfach.</p>
         </div>
 

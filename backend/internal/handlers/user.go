@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fimuver/internal/auth"
 	"fimuver/internal/db"
 	"fimuver/internal/models"
 	"fimuver/internal/services"
@@ -105,13 +106,21 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// 6. Erfolgreiche Response mit neu erstelltem User
+	// Erzeuge JWT Token für neu registrierten Nutzer
+	token, err := auth.GenerateToken(created.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "konnte token nicht erstellen"})
+		return
+	}
+
+	// 6. Erfolgreiche Response mit neu erstelltem User + Token
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Benutzer erfolgreich erstellt",
 		"data": gin.H{
 			"id":       created.ID,
 			"email":    created.Email,
 			"username": created.Username,
+			"token":    token,
 			"is_admin": created.IsAdmin,
 		},
 	})
@@ -160,10 +169,11 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
 		"data": gin.H{
-			"id": user.ID,
-			"email": user.Email,
+			"id":       user.ID,
+			"email":    user.Email,
 			"username": user.Username,
-			"token": token,
+			"token":    token,
+			"is_admin": user.IsAdmin,
 		},
 	})
 }

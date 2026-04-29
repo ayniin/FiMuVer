@@ -80,6 +80,10 @@ export const getCurrentUser = () => {
   return userStr ? JSON.parse(userStr) : null;
 };
 
+export const logout = () => {
+    localStorage.removeItem('user');
+}
+
 // Exportiere die Funktionen als benannte Exports für die Kompatibilität mit Auth.jsx
 export const registerUser = UserAPI.registerUser;
 export const loginUser = UserAPI.loginUser;

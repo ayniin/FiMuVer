@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Auth from './pages/Auth';
 import Landing from './pages/Landing';
-import { getCurrentUser, logout } from './services/api';
+import Admin from './pages/Admin';
+import { getCurrentUser, logout } from './services/userapi';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('landing');
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -18,11 +20,23 @@ function App() {
 
   const handleLoginSuccess = () => {
     setUser(getCurrentUser());
+    setCurrentPage('landing');
   };
 
   const handleLogout = () => {
     logout();
     setUser(null);
+    setCurrentPage('landing');
+  };
+
+  const handleNavigateToAdmin = () => {
+    if (user?.is_admin) {
+      setCurrentPage('admin');
+    }
+  };
+
+  const handleNavigateBack = () => {
+    setCurrentPage('landing');
   };
 
   if (loading) {
@@ -31,13 +45,20 @@ function App() {
 
   return (
     <div className="App">
-      {user ? (
+      {!user ? (
+        <Auth onLoginSuccess={handleLoginSuccess} />
+      ) : currentPage === 'admin' ? (
+        <Admin 
+          user={user} 
+          onLogout={handleLogout}
+          onNavigateBack={handleNavigateBack}
+        />
+      ) : (
         <Landing 
           user={user} 
           onLogout={handleLogout}
+          onNavigateToAdmin={handleNavigateToAdmin}
         />
-      ) : (
-        <Auth onLoginSuccess={handleLoginSuccess} />
       )}
     </div>
   );
