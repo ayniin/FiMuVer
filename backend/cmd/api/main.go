@@ -10,11 +10,11 @@ import (
 	"fimuver/internal/handlers"
 	"fimuver/internal/middleware"
 
-	_ "fimuver/docs"
+	// _ "fimuver/docs" // Swagger docs - generieren mit: swag init -g cmd/api/main.go
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	// swaggerFiles "github.com/swaggo/files"
+	// ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -50,7 +50,7 @@ func main() {
 	router.Use(middleware.CORSMiddleware())
 
 	// Swagger UI
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health Check
 	router.GET("/health", func(c *gin.Context) {

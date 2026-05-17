@@ -27,8 +27,14 @@ class UserAPI {
             }
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                const text = await response.text();  // Zuerst Text lesen!
+                console.error('Backend Response:', text);
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                } catch (e) {
+                    throw new Error(`Backend Error ${response.status}: ${text}`);
+                }
             }
             const data = await response.json();
 
@@ -54,8 +60,14 @@ class UserAPI {
             });
             
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                const text = await response.text();  // Zuerst Text lesen!
+                console.error('Backend Response:', text);
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                } catch (e) {
+                    throw new Error(`Backend Error ${response.status}: ${text}`);
+                }
             }   
             const data = await response.json();
             
