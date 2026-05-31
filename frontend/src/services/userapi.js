@@ -1,91 +1,118 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+import { apiPost, apiGet, apiDelete } from './apiClient';
+
+/**
+ * SICHERHEIT: Token wird NICHT im localStorage gespeichert!
+ * - Token wird vom Backend in HttpOnly Cookie gespeichert
+ * - Frontend sendet Cookie automatisch in jedem Request
+ * - localStorage speichert nur öffentliche User-Metadaten
+ */
 
 class UserAPI {
-    static async registerUser(username, email, password) {
-        if (!username || !email || !password) {
-            throw new Error('Alle Felder müssen ausgefüllt werden.');
-        }
-
-        if (password.length < 12) {
-            throw new Error('Das Passwort muss mindestens 12 Zeichen lang sein.');
-        }
-
-        const body = JSON.stringify({ username, email, password });
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/register`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: body,
-            });
-
-            // Wenn erfolgreich aber leer (z.B. 201 oder 204)
-            if (response.ok && response.headers.get('Content-Length') === '0') {
-                return true;
-            }
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-
-            console.log('Registrierungsantwort:', data);
-
-            this.saveUser(data.data);
-
-            return data;
-        } catch (error) {
-            console.error('Fehler bei der Registrierung:', error);
-            throw error;
-        }
+  /**
+   * Benutzer registrieren
+   * Backend setzt HttpOnly Cookie mit Auth-Token
+   */
+  static async registerUser(username, email, password) {
+    if (!username || !email || !password) {
+      throw new Error('Alle Felder müssen ausgefüllt werden.');
     }
 
-    static async loginUser(email, password) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/users/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }   
-            const data = await response.json();
-            
-            console.log('Login-Antwort:', data);
-
-            this.saveUser(data.data);
-            
-            return data;
-        } catch (error) {
-            console.error('Fehler beim Login:', error);
-            throw error;
-        }
+    if (password.length < 12) {
+      throw new Error('Das Passwort muss mindestens 12 Zeichen lang sein.');
     }
 
-    static async saveUser(data) {
-        localStorage.setItem('user', JSON.stringify(data));
+    try {
+      const response = await apiPost('/users/register', {
+        username,
+        email,
+        password,
+      });
+
+      // Speichere nur User-Metadaten (KEIN TOKEN!)
+      if (response?.data) {
+        this.saveUserMetadata(response.data);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Fehler bei der Registrierung:', error);
+      throw error;
     }
+  }
+
+  /**
+   * Benutzer einloggen
+   * Backend setzt HttpOnly Cookie mit Auth-Token
+   */
+  static async loginUser(email, password) {
+    try {
+      const response = await apiPost('/users/login', {
+        email,
+        password,
+      });
+
+      // Speichere nur User-Metadaten (KEIN TOKEN!)
+      if (response?.data) {
+        this.saveUserMetadata(response.data);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Fehler beim Login:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Speichere öffentliche User-Metadaten und den JWT-Token für API-Calls.
+   */
+  static saveUserMetadata(data) {
+    const metadata = {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      is_admin: data.is_admin,
+    };
+    localStorage.setItem('user_metadata', JSON.stringify(metadata));
+
+    if (data.token) {
+      sessionStorage.setItem('auth_token', data.token);
+    }
+  }
+
+  /**
+   * Logout - Cookie wird vom Backend gelöscht
+   */
+  static async logout() {
+    try {
+      await apiPost('/users/logout', {});
+    } catch (error) {
+      console.error('Fehler beim Logout:', error);
+    } finally {
+      // LocalStorage löschen
+      localStorage.removeItem('user_metadata');
+      sessionStorage.removeItem('auth_token');
+    }
+  }
 }
 
+/**
+ * Gib aktuelle User-Metadaten zurück (KEIN TOKEN)
+ */
 export const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem('user_metadata');
   return userStr ? JSON.parse(userStr) : null;
 };
 
+/**
+ * Logout
+ */
 export const logout = () => {
-    localStorage.removeItem('user');
-}
+  return UserAPI.logout();
+};
 
-// Exportiere die Funktionen als benannte Exports für die Kompatibilität mit Auth.jsx
-export const registerUser = UserAPI.registerUser;
-export const loginUser = UserAPI.loginUser;
+// Exportiere die Funktionen als benannte Exports für Kompatibilität
+export const registerUser = UserAPI.registerUser.bind(UserAPI);
+export const loginUser = UserAPI.loginUser.bind(UserAPI);
 
 export default UserAPI;

@@ -49,7 +49,6 @@ function App() {
         <Auth onLoginSuccess={handleLoginSuccess} />
       ) : currentPage === 'admin' ? (
         <Admin 
-          user={user} 
           onLogout={handleLogout}
           onNavigateBack={handleNavigateBack}
         />

@@ -28,7 +28,7 @@ const Auth = ({ onLoginSuccess }) => {
         setPassword('');
       }
     } catch (err) {
-      setError(err.error || 'Ein Fehler ist aufgetreten.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }

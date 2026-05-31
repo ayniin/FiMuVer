@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FiX } from 'react-icons/fi';
 import './CreateCollectionModal.css';
 import CollectionAPI from '../services/collection';
 
@@ -46,7 +47,9 @@ const CreateCollectionModal = ({ isOpen, onClose, onCollectionCreated }) => {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Neue Collection erstellen</h2>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose} aria-label="Modal schließen">
+            <FiX size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">

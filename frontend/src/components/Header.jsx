@@ -2,18 +2,9 @@ import React from 'react';
 import './Header.css';
 
 const Header = ({ user, onLogout, onNavigateToAdmin }) => {
-  // Debug-Output
-  console.log('Header user prop:', user);
-  console.log('is_admin check:', user?.is_admin);
-  console.log('onNavigateToAdmin function:', onNavigateToAdmin);
-  
   const handleAdminClick = () => {
-    console.log('Admin button clicked!');
     if (onNavigateToAdmin) {
-      console.log('Calling onNavigateToAdmin...');
       onNavigateToAdmin();
-    } else {
-      console.log('ERROR: onNavigateToAdmin is undefined!');
     }
   };
   
@@ -26,11 +17,12 @@ const Header = ({ user, onLogout, onNavigateToAdmin }) => {
             <button 
               onClick={handleAdminClick}
               className="admin-btn"
+              aria-label="Admin-Panel öffnen"
             >
               Admin 
             </button>
           )}
-          <button onClick={onLogout} className="logout-btn">
+          <button onClick={onLogout} className="logout-btn" aria-label="Abmelden">
             Logout
           </button>
         </div>

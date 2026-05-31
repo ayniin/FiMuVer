@@ -139,8 +139,11 @@
 }
 
 .empty-icon {
-  font-size: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 1rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .empty-state h2 {
@@ -190,18 +193,40 @@
   flex: 1;
 }
 
+.btn-edit {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-edit:hover {
+  transform: scale(1.15);
+  color: #5568d3;
+}
+
 .btn-delete {
   background: none;
   border: none;
-  font-size: 1.2rem;
   cursor: pointer;
   transition: transform 0.2s;
-  padding: 0;
-  margin-left: 1rem;
+  padding: 0.25rem;
+  margin-left: 0.5rem;
+  color: #ff6b6b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-delete:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
+  color: #ff5252;
 }
 
 .collection-description {

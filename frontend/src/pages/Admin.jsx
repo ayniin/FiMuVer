@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { FiArrowLeft, FiCheck, FiX } from 'react-icons/fi';
 import './Admin.css';
 import { getCurrentUser } from '../services/userapi';
 import SettingsAPI from '../services/settingsapi';
 import Header from '../components/Header';
 
-const Admin = ({ user, onLogout, onNavigateBack }) => {
+const Admin = ({ onLogout, onNavigateBack }) => {
   const currentUser = getCurrentUser();
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,8 +76,9 @@ const Admin = ({ user, onLogout, onNavigateBack }) => {
       <main className="admin-main">
         <div className="admin-header">
           <h1>Admin-Panel</h1>
-          <button className="back-btn" onClick={onNavigateBack}>
-            ← Zurück
+          <button className="back-btn" onClick={onNavigateBack} aria-label="Zurück zur Startseite">
+            <FiArrowLeft size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+            Zurück
           </button>
         </div>
 
@@ -101,7 +103,17 @@ const Admin = ({ user, onLogout, onNavigateBack }) => {
                   <div className="setting-info">
                     <div className="setting-name">{setting.name}</div>
                     <div className="setting-value">
-                      Status: {setting.value ? '✅ Aktiviert' : '❌ Deaktiviert'}
+                      Status: {setting.value ? (
+                        <>
+                          <FiCheck size={16} style={{ display: 'inline', marginRight: '4px', color: '#28a745', verticalAlign: 'middle' }} />
+                          Aktiviert
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={16} style={{ display: 'inline', marginRight: '4px', color: '#dc3545', verticalAlign: 'middle' }} />
+                          Deaktiviert
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="setting-actions">
