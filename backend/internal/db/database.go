@@ -39,6 +39,7 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		&models.Collection{},
 		&models.CollectionItem{},
 		&models.Settings{},
+		&models.InviteCode{},
 	); err != nil {
 		return nil, fmt.Errorf("fehler bei der Datenbank-Migration: %w", err)
 	}
