@@ -63,6 +63,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
 	collectionHandler := handlers.NewCollectionHandler(database)
+	inviteHandler := handlers.NewInviteHandler(database)
 
 	api := router.Group("/api/v1")
 	{
@@ -89,9 +90,16 @@ func main() {
 
 		collections := secure.Group("/collections")
 		{
-			// GET /api/v1/collections -> returns collections for the authenticated user (user_id from JWT)
 			collections.GET("", collectionHandler.GetAllCollectionsForUser)
 			collections.POST("", collectionHandler.CreateCollection)
+		}
+
+		invite := secure.Group("/invite")
+		{
+			invite.POST("/generate", inviteHandler.GenerateInviteCode)
+			invite.POST("/use/:code", inviteHandler.UseInviteCode)
+			invite.GET("/list", inviteHandler.ListInviteCodes)
+			invite.DELETE("/:id", inviteHandler.DeleteInviteCode)
 		}
 	}
 

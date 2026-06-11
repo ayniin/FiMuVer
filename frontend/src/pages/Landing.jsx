@@ -4,6 +4,7 @@ import { getCurrentUser } from '../services/userapi';
 import CollectionAPI from '../services/collection';
 import Header from '../components/Header';
 import CreateCollectionModal from '../components/CreateCollectionModal';
+import InviteCodes from '../components/InviteCodes';
 
 const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
   const currentUser = getCurrentUser();
@@ -118,11 +119,19 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
         )}
       </main>
 
-      <CreateCollectionModal 
+      <CreateCollectionModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onCollectionCreated={handleCollectionCreated}
       />
+
+      {currentUser?.is_admin && (
+        <section className="landing-invite-section">
+          <div className="landing-invite-wrapper">
+            <InviteCodes />
+          </div>
+        </section>
+      )}
 
       <footer className="landing-footer">
         <p>&copy; 2026 FiMuVer - Medienverwaltung leicht gemacht</p>

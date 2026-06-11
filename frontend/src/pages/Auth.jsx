@@ -7,6 +7,7 @@ const Auth = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,15 +21,15 @@ const Auth = ({ onLoginSuccess }) => {
         await UserAPI.loginUser(email, password);
         onLoginSuccess();
       } else {
-        await UserAPI.registerUser(username, email, password);
-        // Nach erfolgreicher Registrierung zum Login wechseln
+        await UserAPI.registerUser(username, email, password, inviteCode);
         setIsLogin(true);
         setUsername('');
         setEmail('');
         setPassword('');
+        setInviteCode('');
       }
     } catch (err) {
-      setError(err.error || 'Ein Fehler ist aufgetreten.');
+      setError(err.message || 'Ein Fehler ist aufgetreten.');
     } finally {
       setLoading(false);
     }
@@ -71,17 +72,30 @@ const Auth = ({ onLoginSuccess }) => {
               required
             />
           </div>
+          {!isLogin && (
+            <div className="form-group">
+              <label htmlFor="inviteCode">Invite Code <span className="optional-label">(optional)</span></label>
+              <input
+                type="text"
+                id="inviteCode"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="z.B. AB12CD34"
+                maxLength={8}
+              />
+            </div>
+          )}
           {error && <p className="error-message">{error}</p>}
           <button type="submit" disabled={loading}>
             {loading ? 'Wird geladen...' : isLogin ? 'Login' : 'Registrieren'}
           </button>
         </form>
-        <p>
-          {isLogin ? 'Noch kein Konto?' : 'Bereits ein Konto?'}
-          <button className="toggle-btn" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? 'Registrieren' : 'Login'}
+        <div className="auth-switch">
+          <span>{isLogin ? 'Noch kein Konto?' : 'Bereits ein Konto?'}</span>
+          <button className="auth-switch-link" onClick={() => setIsLogin(!isLogin)}>
+            {isLogin ? 'Registrieren' : 'Zum Login'}
           </button>
-        </p>
+        </div>
       </div>
     </div>
   );

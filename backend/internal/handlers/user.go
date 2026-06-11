@@ -11,6 +11,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateUserRequest DTO für User-Erstellung
+type CreateUserRequest struct {
+	Email      string `json:"email" binding:"required,email"`
+	Username   string `json:"username" binding:"required,min=3,max=50"`
+	Password   string `json:"password" binding:"required,min=12,max=60"`
+	InviteCode string `json:"invite_code"`
+}
+
 type UserHandler struct {
 	db *db.Database
 }
@@ -76,9 +84,40 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Password must be between 12 and 60 characters long",
 		})
+		return
 	}
 
-	// 3. Prüfe ob Email bereits existiert
+	// 3. Prüfe enable_registration Setting und validiere Invite Code
+	var registrationSetting models.Settings
+	inviteSvc := services.NewInviteService(h.db)
+	settingResult := h.db.DB.Where("name = ?", "enable_registration").First(&registrationSetting)
+	registrationEnabled := settingResult.Error == nil && registrationSetting.Value
+
+	var inviteToUse *models.InviteCode
+
+	if !registrationEnabled {
+		if req.InviteCode == "" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Registrierung ist deaktiviert. Ein Invite Code ist erforderlich.",
+			})
+			return
+		}
+		invite, err := inviteSvc.ValidateInviteCode(req.InviteCode)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		inviteToUse = invite
+	} else if req.InviteCode != "" {
+		invite, err := inviteSvc.ValidateInviteCode(req.InviteCode)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		inviteToUse = invite
+	}
+
+	// 4. Prüfe ob Email bereits existiert
 	var existingUser models.User
 	result := h.db.DB.Where("email = ?", req.Email).First(&existingUser)
 	if result.RowsAffected > 0 {
@@ -88,12 +127,12 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// 4. Erstelle neues User Objekt
+	// 5. Erstelle neues User Objekt
 	user := models.User{
 		Email:    req.Email,
 		Username: req.Username,
 		Password: req.Password,
-		IsAdmin:  false, // Neue User sind standardmäßig keine Admins
+		IsAdmin:  false,
 	}
 
 	var userService = services.NewUserService(h.db)
@@ -104,6 +143,11 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 			"error": err.Error(),
 		})
 		return
+	}
+
+	// 6. Invite Code als verwendet markieren
+	if inviteToUse != nil {
+		_ = inviteSvc.UseInviteCode(inviteToUse, created.ID)
 	}
 
 	// Erzeuge JWT Token für neu registrierten Nutzer
@@ -178,9 +222,3 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 	})
 }
 
-// CreateUserRequest DTO für User-Erstellung
-type CreateUserRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Username string `json:"username" binding:"required,min=3,max=50"`
-	Password string `json:"password" binding:"required,min=12,max=60"`
-}

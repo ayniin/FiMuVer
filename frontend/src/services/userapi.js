@@ -1,7 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 class UserAPI {
-    static async registerUser(username, email, password) {
+    static async registerUser(username, email, password, inviteCode = '') {
         if (!username || !email || !password) {
             throw new Error('Alle Felder müssen ausgefüllt werden.');
         }
@@ -10,7 +10,9 @@ class UserAPI {
             throw new Error('Das Passwort muss mindestens 12 Zeichen lang sein.');
         }
 
-        const body = JSON.stringify({ username, email, password });
+        const payload = { username, email, password };
+        if (inviteCode) payload.invite_code = inviteCode;
+        const body = JSON.stringify(payload);
 
         try {
             const response = await fetch(`${API_BASE_URL}/users/register`, {

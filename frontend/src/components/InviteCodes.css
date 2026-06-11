@@ -1,0 +1,108 @@
+.invite-codes {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.invite-codes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.invite-codes-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.invite-generate-btn {
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    background-color: #28a745;
+}
+
+.invite-generate-btn:hover:not(:disabled) {
+    background-color: #1e7e34;
+}
+
+.invite-error {
+    color: red;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.invite-loading,
+.invite-empty {
+    color: #888;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.invite-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.invite-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid #eee;
+    color: #555;
+    font-weight: 600;
+}
+
+.invite-table td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.invite-table tr.invite-used td {
+    color: #aaa;
+}
+
+.invite-code-text {
+    font-family: monospace;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    margin-right: 0.5rem;
+}
+
+.invite-copy-btn {
+    width: auto;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.85rem;
+    background: #f0f0f0;
+    color: #555;
+    border-radius: 4px;
+}
+
+.invite-copy-btn:hover:not(:disabled) {
+    background: #e0e0e0;
+}
+
+.invite-delete-btn {
+    width: auto;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.8rem;
+    background: #dc3545;
+}
+
+.invite-delete-btn:hover:not(:disabled) {
+    background: #a71d2a;
+}
+
+@media (max-width: 600px) {
+    .invite-table th:nth-child(3),
+    .invite-table td:nth-child(3),
+    .invite-table th:nth-child(4),
+    .invite-table td:nth-child(4) {
+        display: none;
+    }
+}
