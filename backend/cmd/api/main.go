@@ -92,6 +92,8 @@ func main() {
 		{
 			collections.GET("", collectionHandler.GetAllCollectionsForUser)
 			collections.POST("", collectionHandler.CreateCollection)
+			collections.PUT("/:id", collectionHandler.UpdateCollection)
+			collections.DELETE("/:id", collectionHandler.DeleteCollection)
 		}
 
 		invite := secure.Group("/invite")

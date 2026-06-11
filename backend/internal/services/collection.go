@@ -68,3 +68,14 @@ func (s *CollectionService) UpdateCollection(id uint, updates models.Collection)
 	}
 	return col, nil
 }
+
+func (s *CollectionService) DeleteCollection(id uint, userID uint) error {
+	result := s.db.DB.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Collection{})
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete collection: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("collection not found or no permission")
+	}
+	return nil
+}
