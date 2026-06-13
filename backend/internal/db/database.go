@@ -40,6 +40,7 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		&models.MovieActor{},
 		&models.Collection{},
 		&models.CollectionItem{},
+		&models.Item{},
 		&models.Settings{},
 		&models.InviteCode{},
 	); err != nil {

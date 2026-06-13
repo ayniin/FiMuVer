@@ -128,6 +128,22 @@ class MediaAPI {
 
 
 
+export const addItemToCollection = async (collectionId, itemData) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const headers = { 'Content-Type': 'application/json' };
+  if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
+
+  const response = await fetch(`${API_BASE_URL}/collections/${collectionId}/items`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(itemData),
+  });
+
+  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+  const data = await response.json();
+  return data.data;
+};
+
 export const logout = () => {
   localStorage.removeItem('user');
 };

@@ -63,6 +63,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
 	collectionHandler := handlers.NewCollectionHandler(database)
+	itemHandler := handlers.NewItemHandler(database)
 	inviteHandler := handlers.NewInviteHandler(database)
 
 	api := router.Group("/api/v1")
@@ -95,6 +96,8 @@ func main() {
 			collections.POST("", collectionHandler.CreateCollection)
 			collections.PUT("/:id", collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", collectionHandler.DeleteCollection)
+			collections.POST("/:id/items", itemHandler.AddItem)
+			collections.DELETE("/:id/items/:itemId", itemHandler.DeleteItem)
 		}
 
 		invite := secure.Group("/invite")
