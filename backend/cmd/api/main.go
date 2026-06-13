@@ -91,6 +91,7 @@ func main() {
 		collections := secure.Group("/collections")
 		{
 			collections.GET("", collectionHandler.GetAllCollectionsForUser)
+			collections.GET("/:id", collectionHandler.GetCollectionByID)
 			collections.POST("", collectionHandler.CreateCollection)
 			collections.PUT("/:id", collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", collectionHandler.DeleteCollection)

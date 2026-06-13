@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import CreateCollectionModal from '../components/CreateCollectionModal';
 import InviteCodes from '../components/InviteCodes';
 
-const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
+const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) => {
   const currentUser = getCurrentUser();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +50,19 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
       }
     }
   };
+
+  const handleOpenCollection = async (collection) => {
+
+    try {
+      const data = await CollectionAPI.getCollectionById(collection.id);
+      if (data){
+        onNavigateToCollection(data);
+
+      }
+  } catch (err) {
+      setError(err.message || `Fehler beim Öffnen der Collection "${collection.name}"`);
+    }
+};
 
   console.log('Aktueller Benutzer in Landing:', currentUser);
 
@@ -99,7 +112,6 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
                   <button 
                     className="btn-delete"
                     onClick={() => handleDeleteCollection(collection.id, collection.name)}
-                    title="Löschen"
                   >
                     🗑️
                   </button>
@@ -111,7 +123,12 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
                   <span className="collection-items">
                     {collection.items?.length || 0} Einträge
                   </span>
-                  <button className="btn-open">Öffnen →</button>
+                  <button className="btn-open"
+                    onClick={() => handleOpenCollection(collection)}
+                    title="Öffnen"
+                  >  
+                    Öffnen →
+                  </button>
                 </div>
               </div>
             ))}
