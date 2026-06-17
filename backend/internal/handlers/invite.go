@@ -67,25 +67,6 @@ func (h *InviteHandler) ListInviteCodes(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": codes})
 }
 
-func (h *InviteHandler) UseInviteCode(c *gin.Context) {
-	userID := c.GetUint("user_id")
-	code := c.Param("code")
-
-	svc := services.NewInviteService(h.db)
-	invite, err := svc.ValidateInviteCode(code)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := svc.UseInviteCode(invite, userID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Invite Code erfolgreich verwendet"})
-}
-
 func (h *InviteHandler) DeleteInviteCode(c *gin.Context) {
 	userID := c.GetUint("user_id")
 

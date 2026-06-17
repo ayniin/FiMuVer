@@ -103,7 +103,6 @@ func main() {
 		invite := secure.Group("/invite")
 		{
 			invite.POST("/generate", inviteHandler.GenerateInviteCode)
-			invite.POST("/use/:code", inviteHandler.UseInviteCode)
 			invite.GET("/list", inviteHandler.ListInviteCodes)
 			invite.DELETE("/:id", inviteHandler.DeleteInviteCode)
 		}
