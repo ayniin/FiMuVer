@@ -14,3 +14,6 @@ database:
   database: "fimuver_db"
   sslmode: "disable"
 
+tvdb:
+  tvdb_api_key: ""
+  base_url: "https://api4.thetvdb.com/v4"

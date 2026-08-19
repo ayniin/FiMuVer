@@ -13,11 +13,16 @@ import (
 	// _ "fimuver/docs" // Swagger docs - generieren mit: swag init -g cmd/api/main.go
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	// swaggerFiles "github.com/swaggo/files"
 	// ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Printf("Keine .env-Datei gefunden, fahre fort mit Umgebungsvariablen / config.yaml")
+	}
 	// Lade Konfiguration
 	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
@@ -65,6 +70,7 @@ func main() {
 	collectionHandler := handlers.NewCollectionHandler(database)
 	itemHandler := handlers.NewItemHandler(database)
 	inviteHandler := handlers.NewInviteHandler(database)
+	tvdbHandler := handlers.NewTVDBHandler(&cfg.TVDB)
 
 	api := router.Group("/api/v1")
 	{
@@ -98,6 +104,7 @@ func main() {
 			collections.DELETE("/:id", collectionHandler.DeleteCollection)
 			collections.POST("/:id/items", itemHandler.AddItem)
 			collections.DELETE("/:id/items/:itemId", itemHandler.DeleteItem)
+
 		}
 
 		invite := secure.Group("/invite")
@@ -105,6 +112,12 @@ func main() {
 			invite.POST("/generate", inviteHandler.GenerateInviteCode)
 			invite.GET("/list", inviteHandler.ListInviteCodes)
 			invite.DELETE("/:id", inviteHandler.DeleteInviteCode)
+		}
+
+		tvdb := secure.Group("/tvdb")
+		{
+			tvdb.GET("/search/series", tvdbHandler.SearchSeries)
+			tvdb.GET("/search/movies", tvdbHandler.SearchMovies)
 		}
 	}
 

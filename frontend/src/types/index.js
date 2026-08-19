@@ -47,6 +47,8 @@ export class Media {
   condition = CONDITIONS.GOOD;
   location = '';
   notes = '';
+  tdb_id = '';
+  image_url = '';
   created_at = new Date();
   updated_at = new Date();
 

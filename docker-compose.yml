@@ -30,6 +30,8 @@ services:
       - DATABASE_USER=fimuver_user
       - DATABASE_PASSWORD=fimuver_password
       - DATABASE_NAME=fimuver_db
+      - TVDB_API_KEY=${TVDB_API_KEY}
+      - TVDB_BASE_URL=${TVDB_BASE_URL}
     ports:
       - "8080:8080"
     depends_on:

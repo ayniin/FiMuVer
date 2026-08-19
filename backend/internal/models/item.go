@@ -17,6 +17,8 @@ type Item struct {
 	Condition    string    `json:"condition"`
 	Location     string    `json:"location"`
 	Notes        string    `json:"notes"`
+	TVDBID       string    `json:"tvdb_id"`
+	ImageURL     string    `json:"image_url"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

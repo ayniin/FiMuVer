@@ -24,6 +24,8 @@ type ItemDTO struct {
 	Condition   string `json:"condition"`
 	Location    string `json:"location"`
 	Notes       string `json:"notes"`
+	TVDBID      string `json:"tvdb_id"`
+	ImageURL    string `json:"image_url"`
 }
 
 func NewItemHandler(db *db.Database) *ItemHandler {
@@ -60,6 +62,8 @@ func (h *ItemHandler) AddItem(c *gin.Context) {
 		Condition:    dto.Condition,
 		Location:     dto.Location,
 		Notes:        dto.Notes,
+		TVDBID:       dto.TVDBID,
+		ImageURL:     dto.ImageURL,
 	}
 
 	if err := h.db.DB.Create(&item).Error; err != nil {
