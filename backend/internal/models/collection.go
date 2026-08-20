@@ -23,8 +23,8 @@ type Collection struct {
 	UpdatedAt   time.Time        `json:"updated_at"`
 
 	// Beziehungen
-	User  User               `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	Items []CollectionItem   `gorm:"foreignKey:CollectionID" json:"items,omitempty"`
+	User  User   `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	Items []Item `gorm:"foreignKey:CollectionID" json:"items,omitempty"`
 }
 
 // TableName gibt den Namen der Tabelle für GORM an

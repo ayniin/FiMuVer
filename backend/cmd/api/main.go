@@ -10,14 +10,19 @@ import (
 	"fimuver/internal/handlers"
 	"fimuver/internal/middleware"
 
-	_ "fimuver/docs"
+	// _ "fimuver/docs" // Swagger docs - generieren mit: swag init -g cmd/api/main.go
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/joho/godotenv"
+	// swaggerFiles "github.com/swaggo/files"
+	// ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
+
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Printf("Keine .env-Datei gefunden, fahre fort mit Umgebungsvariablen / config.yaml")
+	}
 	// Lade Konfiguration
 	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
@@ -50,7 +55,7 @@ func main() {
 	router.Use(middleware.CORSMiddleware())
 
 	// Swagger UI
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health Check
 	router.GET("/health", func(c *gin.Context) {
@@ -63,6 +68,9 @@ func main() {
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
 	collectionHandler := handlers.NewCollectionHandler(database)
+	itemHandler := handlers.NewItemHandler(database)
+	inviteHandler := handlers.NewInviteHandler(database)
+	tvdbHandler := handlers.NewTVDBHandler(&cfg.TVDB)
 
 	api := router.Group("/api/v1")
 	{
@@ -89,9 +97,27 @@ func main() {
 
 		collections := secure.Group("/collections")
 		{
-			// GET /api/v1/collections -> returns collections for the authenticated user (user_id from JWT)
 			collections.GET("", collectionHandler.GetAllCollectionsForUser)
+			collections.GET("/:id", collectionHandler.GetCollectionByID)
 			collections.POST("", collectionHandler.CreateCollection)
+			collections.PUT("/:id", collectionHandler.UpdateCollection)
+			collections.DELETE("/:id", collectionHandler.DeleteCollection)
+			collections.POST("/:id/items", itemHandler.AddItem)
+			collections.DELETE("/:id/items/:itemId", itemHandler.DeleteItem)
+
+		}
+
+		invite := secure.Group("/invite")
+		{
+			invite.POST("/generate", inviteHandler.GenerateInviteCode)
+			invite.GET("/list", inviteHandler.ListInviteCodes)
+			invite.DELETE("/:id", inviteHandler.DeleteInviteCode)
+		}
+
+		tvdb := secure.Group("/tvdb")
+		{
+			tvdb.GET("/search/series", tvdbHandler.SearchSeries)
+			tvdb.GET("/search/movies", tvdbHandler.SearchMovies)
 		}
 	}
 

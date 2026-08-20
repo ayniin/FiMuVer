@@ -1,7 +1,9 @@
 package db
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"fimuver/internal/config"
 	"fimuver/internal/models"
@@ -38,7 +40,9 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		&models.MovieActor{},
 		&models.Collection{},
 		&models.CollectionItem{},
+		&models.Item{},
 		&models.Settings{},
+		&models.InviteCode{},
 	); err != nil {
 		return nil, fmt.Errorf("fehler bei der Datenbank-Migration: %w", err)
 	}
@@ -55,7 +59,7 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 func seedDefaultSettings(db *gorm.DB) error {
 	// Definiere Default Settings
 	defaultSettings := []models.Settings{
-		{Name: "enable_registration", Value: false}, // Dark Mode enabled
+		{Name: "enable_registration", Value: true}, // Dark Mode enabled
 	}
 
 	// Für jedes Setting prüfe ob es bereits existiert
@@ -72,6 +76,58 @@ func seedDefaultSettings(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+func (d *Database) GetInviteCodeByCode(code string) (*models.InviteCode, error) {
+	var invite models.InviteCode
+	if err := d.DB.Where("code = ?", code).First(&invite).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("invite code nicht gefunden")
+		}
+		return nil, err
+	}
+	return &invite, nil
+}
+
+func (d *Database) CreateInviteCode(code *models.InviteCode) error {
+	return d.DB.Create(code).Error
+}
+
+func (d *Database) UpdateInviteCode(code *models.InviteCode) error {
+	return d.DB.Save(code).Error
+}
+
+func (d *Database) DeleteInviteCode(id uint) error {
+	result := d.DB.Delete(&models.InviteCode{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("invite code nicht gefunden")
+	}
+	return nil
+}
+
+func (d *Database) GetInviteCodesByUser(userID uint) ([]models.InviteCode, error) {
+	var codes []models.InviteCode
+	if err := d.DB.Where("created_by_user_id = ?", userID).Order("created_at desc").Find(&codes).Error; err != nil {
+		return nil, err
+	}
+	return codes, nil
+}
+
+func (d *Database) ValidateInviteCode(code string) bool {
+	invite, err := d.GetInviteCodeByCode(code)
+	if err != nil {
+		return false
+	}
+	if invite.ExpiresAt != nil && time.Now().After(*invite.ExpiresAt) {
+		return false
+	}
+	if invite.MaxUses > 0 && invite.CurrentUses >= invite.MaxUses {
+		return false
+	}
+	return true
 }
 
 // Close schließt die Datenbankverbindung

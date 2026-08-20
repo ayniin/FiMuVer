@@ -17,6 +17,11 @@ type DatabaseConfig struct {
 	SSLMode  string `yaml:"sslmode"`
 }
 
+type TVDBConfig struct {
+	TvdbApiKey string `yaml:"tvdb_api_key"`
+	BaseURL    string `yaml:"base_url"`
+}
+
 type ServerConfig struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
@@ -30,6 +35,7 @@ type JWTConfig struct {
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	TVDB     TVDBConfig     `yaml:"tvdb"`
 	JWT      JWTConfig      `yaml:"jwt"`
 }
 
@@ -81,6 +87,17 @@ func LoadConfig(filepath string) (*Config, error) {
 	}
 	if jwtTTL := os.Getenv("JWT_TTL"); jwtTTL != "" {
 		cfg.JWT.TTL, _ = time.ParseDuration(jwtTTL)
+	}
+
+	if tvdbApiKey := os.Getenv("TVDB_API_KEY"); tvdbApiKey != "" {
+		cfg.TVDB.TvdbApiKey = tvdbApiKey
+	}
+	if tvdbBaseURL := os.Getenv("TVDB_BASE_URL"); tvdbBaseURL != "" {
+		cfg.TVDB.BaseURL = tvdbBaseURL
+	}
+
+	if cfg.TVDB.BaseURL == "" {
+		cfg.TVDB.BaseURL = "https://api4.thetvdb.com/v4"
 	}
 
 	return &cfg, nil

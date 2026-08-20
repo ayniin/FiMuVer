@@ -4,6 +4,7 @@ import './Admin.css';
 import { getCurrentUser } from '../services/userapi';
 import SettingsAPI from '../services/settingsapi';
 import Header from '../components/Header';
+import InviteCodes from '../components/InviteCodes';
 
 const Admin = ({ onLogout, onNavigateBack }) => {
   const currentUser = getCurrentUser();
@@ -134,6 +135,10 @@ const Admin = ({ onLogout, onNavigateBack }) => {
               ))}
             </div>
           )}
+        </div>
+
+        <div className="settings-section">
+          <InviteCodes />
         </div>
       </main>
 

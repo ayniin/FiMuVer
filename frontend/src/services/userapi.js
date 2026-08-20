@@ -12,7 +12,7 @@ class UserAPI {
    * Benutzer registrieren
    * Backend setzt HttpOnly Cookie mit Auth-Token
    */
-  static async registerUser(username, email, password) {
+  static async registerUser(username, email, password, inviteCode = '') {
     if (!username || !email || !password) {
       throw new Error('Alle Felder müssen ausgefüllt werden.');
     }
@@ -21,12 +21,13 @@ class UserAPI {
       throw new Error('Das Passwort muss mindestens 12 Zeichen lang sein.');
     }
 
+    const payload = { username, email, password };
+    if (inviteCode) {
+      payload.invite_code = inviteCode;
+    }
+
     try {
-      const response = await apiPost('/users/register', {
-        username,
-        email,
-        password,
-      });
+      const response = await apiPost('/users/register', payload);
 
       // Speichere nur User-Metadaten (KEIN TOKEN!)
       if (response?.data) {
