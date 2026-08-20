@@ -6,12 +6,13 @@ import CollectionAPI from '../services/collection';
 import Header from '../components/Header';
 import CreateCollectionModal from '../components/CreateCollectionModal';
 import { getAuthToken } from '../services/apiClient';
+import InviteCodes from '../components/InviteCodes';
 
 const hasAuthToken = () => {
   return Boolean(getAuthToken());
 };
 
-const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
+const Landing = ({ user, onLogout, onNavigateToAdmin, onNavigateToCollection }) => {
   const currentUser = getCurrentUser();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +62,19 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
       }
     }
   };
+
+  const handleOpenCollection = async (collection) => {
+
+    try {
+      const data = await CollectionAPI.getCollectionById(collection.id);
+      if (data){
+        onNavigateToCollection(data);
+
+      }
+  } catch (err) {
+      setError(err.message || `Fehler beim Öffnen der Collection "${collection.name}"`);
+    }
+};
 
   const handleEditCollection = async (id) => {
     try {
@@ -144,7 +158,11 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
                   <span className="collection-items">
                     {collection.items?.length || 0} Einträge
                   </span>
-                  <button className="btn-open" aria-label="Collection öffnen">
+                  <button className="btn-open"
+                    onClick={() => handleOpenCollection(collection)}
+                    title="Öffnen"
+                    aria-label="Collection öffnen"
+                  >  
                     Öffnen <FiArrowRight size={16} style={{ marginLeft: '6px', verticalAlign: 'middle' }} />
                   </button>
                 </div>
@@ -154,11 +172,19 @@ const Landing = ({ user, onLogout, onNavigateToAdmin }) => {
         )}
       </main>
 
-      <CreateCollectionModal 
+      <CreateCollectionModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onCollectionCreated={handleCollectionCreated}
       />
+
+      {currentUser?.is_admin && (
+        <section className="landing-invite-section">
+          <div className="landing-invite-wrapper">
+            <InviteCodes />
+          </div>
+        </section>
+      )}
 
       <footer className="landing-footer">
         <p>&copy; 2026 FiMuVer - Medienverwaltung leicht gemacht</p>

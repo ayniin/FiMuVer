@@ -124,7 +124,45 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"data": updated})
-	return
+}
+
+func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
+	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid collection id"})
+		return
+	}
+
+	svc := services.NewCollectionService(h.db)
+	col, err := svc.GetCollectionByID(uint(id64))
+	if err != nil {
+		c.JSON(404, gin.H{"error": "collection not found"})
+		return
+	}
+
+	c.JSON(200, gin.H{"data": col})
+}
+
+func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "user not authenticated"})
+		return
+	}
+
+	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid collection id"})
+		return
+	}
+
+	svc := services.NewCollectionService(h.db)
+	if err := svc.DeleteCollection(uint(id64), userID); err != nil {
+		c.JSON(404, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Collection gelöscht"})
 }
 
 func newCollectionResponse(c models.Collection) {

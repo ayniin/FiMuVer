@@ -65,11 +65,45 @@ button:hover:not(:disabled) {
   background-color: #0056b3;
 }
 
-.toggle-btn {
+.optional-label {
+  font-size: 0.8rem;
+  color: #999;
+  font-weight: normal;
+}
+
+.auth-switch {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.auth-switch-link {
+  width: auto;
+  padding: 0.25rem 0.5rem;
   background: none;
-  border: none;
   color: #007bff;
-  cursor: pointer;
-  padding: 0;
-  margin-left: 0.5rem;
+  font-weight: 600;
+  text-decoration: underline;
+  font-size: 0.95rem;
+}
+
+.auth-switch-link:hover:not(:disabled) {
+  background: none;
+  color: #0056b3;
+}
+
+@media (max-width: 480px) {
+  .auth-switch {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .auth-switch-link {
+    padding: 0.5rem 1rem;
+    min-height: 44px;
+  }
 }

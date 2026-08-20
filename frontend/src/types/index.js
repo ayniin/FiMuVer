@@ -46,7 +46,9 @@ export class Media {
   genre = '';
   condition = CONDITIONS.GOOD;
   location = '';
-  notes = {};
+  notes = '';
+  tdb_id = '';
+  image_url = '';
   created_at = new Date();
   updated_at = new Date();
 
