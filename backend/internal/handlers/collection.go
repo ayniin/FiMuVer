@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"strconv"
+	"time"
 
 	"fimuver/internal/db"
 	"fimuver/internal/models"
@@ -14,10 +15,19 @@ type CollectionHandler struct {
 	db *db.Database
 }
 
-type CollectionDTO struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
+type CollectionRequest struct {
+	Name        string `json:"name" required:"true"`
+	Description string `json:"description" required:"true"`
+	Type        string `json:"type" required:"true"`
+}
+
+type CollectionResponse struct {
+	ID          uint      `json:"id"`
+	UserID      uint      `json:"user_id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func NewCollectionHandler(db *db.Database) *CollectionHandler {
@@ -25,36 +35,27 @@ func NewCollectionHandler(db *db.Database) *CollectionHandler {
 }
 
 func (h *CollectionHandler) GetAllCollectionsForUser(c *gin.Context) {
-	userID, err := GetUserIDFromContext(c)
-	if err != nil {
-		c.JSON(401, gin.H{"error": "user not authenticated"})
-		return
-	}
+	userID := c.GetUint("user_id")
 
 	// Use CollectionService to fetch collections
 	svc := services.NewCollectionService(h.db)
 	collections, err := svc.GetCollectionsByUserID(userID)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "error fetching collections"})
+		serverError(c, msgFetchCollections)
 		return
 	}
 
-	c.JSON(200, gin.H{"data": collections})
+	ok(c, newCollectionArrayResponse(collections))
 }
 
 func (h *CollectionHandler) CreateCollection(c *gin.Context) {
-	var collectionDTO CollectionDTO
+	var collectionDTO CollectionRequest
 	if err := c.ShouldBindJSON(&collectionDTO); err != nil {
-		c.JSON(400, gin.H{"error": "invalid request body"})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
 
-	// get user id from context
-	userID, err := GetUserIDFromContext(c)
-	if err != nil {
-		c.JSON(401, gin.H{"error": "user not authenticated"})
-		return
-	}
+	userID := c.GetUint("user_id")
 
 	// create model and persist via service
 	svc := services.NewCollectionService(h.db)
@@ -63,38 +64,35 @@ func (h *CollectionHandler) CreateCollection(c *gin.Context) {
 		Name:        collectionDTO.Name,
 		Description: collectionDTO.Description,
 	}
-	created, err := svc.AddCollection(col)
+	crea, err := svc.AddCollection(col)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "could not create collection"})
+		serverError(c, msgCreateCollection)
 		return
 	}
 
-	c.JSON(201, gin.H{"data": created})
+	created(c, msgCreateCollectionSuccess, newCollectionResponse(*crea))
 }
 
 func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
-	var collectionDTO CollectionDTO
+	var collectionDTO CollectionRequest
 	if err := c.ShouldBindJSON(&collectionDTO); err != nil {
-		c.JSON(400, gin.H{"error": "invalid request body"})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
-	userID, err := GetUserIDFromContext(c)
-	if err != nil {
-		c.JSON(401, gin.H{"error": "user not authenticated"})
-		return
-	}
+
+	userID := c.GetUint("user_id")
 
 	svc := services.NewCollectionService(h.db)
 	// parse collection id from path
 	idStr := c.Param("id")
 	if idStr == "" {
-		c.JSON(400, gin.H{"error": "collection id required"})
+		badRequest(c, msgCollectionIDRequired)
 		return
 	}
 	// parse uint using strconv for clarity
 	id64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "invalid collection id"})
+		badRequest(c, msgInvalidCollectionID)
 		return
 	}
 	id := uint(id64)
@@ -102,13 +100,13 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 	// load existing collection
 	existing, err := svc.GetCollectionByID(uint(id))
 	if err != nil {
-		c.JSON(404, gin.H{"error": "collection not found"})
+		notFound(c, msgCollectionNotFound)
 		return
 	}
 
 	// ownership check
 	if existing.UserID != userID {
-		c.JSON(403, gin.H{"error": "forbidden"})
+		forbidden(c)
 		return
 	}
 
@@ -119,52 +117,69 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 
 	updated, err := svc.UpdateCollection(uint(id), updates)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "could not update collection"})
+		serverError(c, msgUpdateCollection)
 		return
 	}
 
-	c.JSON(200, gin.H{"data": updated})
+	ok(c, newCollectionResponse(*updated))
 }
 
 func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
 	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "invalid collection id"})
+		unauthorized(c)
 		return
 	}
 
 	svc := services.NewCollectionService(h.db)
 	col, err := svc.GetCollectionByID(uint(id64))
 	if err != nil {
-		c.JSON(404, gin.H{"error": "collection not found"})
+		notFound(c, msgCollectionNotFound)
 		return
 	}
-
-	c.JSON(200, gin.H{"data": col})
+	ok(c, newCollectionResponse(*col))
 }
 
 func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
-	userID, err := GetUserIDFromContext(c)
-	if err != nil {
-		c.JSON(401, gin.H{"error": "user not authenticated"})
-		return
-	}
+	userID := c.GetUint("user_id")
 
 	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(400, gin.H{"error": "invalid collection id"})
+		badRequest(c, msgCollectionIDRequired)
 		return
 	}
 
 	svc := services.NewCollectionService(h.db)
-	if err := svc.DeleteCollection(uint(id64), userID); err != nil {
-		c.JSON(404, gin.H{"error": err.Error()})
+	col, err := svc.DeleteCollection(uint(id64), userID)
+	if err != nil {
+		notFound(c, msgCollectionNotFound)
 		return
 	}
-
-	c.JSON(200, gin.H{"message": "Collection gelöscht"})
+	okMessage(c, msgCollectionDeleted, newCollectionResponse(*col))
 }
 
-func newCollectionResponse(c models.Collection) {
-	return
+func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
+	collections := make([]CollectionResponse, len(c))
+	for _, col := range c {
+		collections = append(collections, CollectionResponse{
+			ID:          col.ID,
+			UserID:      col.UserID,
+			Name:        col.Name,
+			Description: col.Description,
+			CreatedAt:   col.CreatedAt,
+			UpdatedAt:   col.UpdatedAt,
+		})
+	}
+	return collections
+}
+
+func newCollectionResponse(c models.Collection) CollectionResponse {
+	return CollectionResponse{
+		ID:          c.ID,
+		UserID:      c.UserID,
+		Name:        c.Name,
+		Description: c.Description,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+	}
 }

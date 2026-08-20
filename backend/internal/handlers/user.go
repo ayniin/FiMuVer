@@ -1,26 +1,23 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+
 	"fimuver/internal/auth"
 	"fimuver/internal/db"
 	"fimuver/internal/models"
 	"fimuver/internal/services"
-	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateUserRequest DTO für User-Erstellung
-type CreateUserRequest struct {
-	Email      string `json:"email" binding:"required,email"`
-	Username   string `json:"username" binding:"required,min=3,max=50"`
-	Password   string `json:"password" binding:"required,min=12,max=60"`
-	InviteCode string `json:"invite_code"`
-}
-
 type UserHandler struct {
 	db *db.Database
+}
+
+func NewUserHandler(database *db.Database) *UserHandler {
+	return &UserHandler{db: database}
 }
 
 type LoginRequest struct {
@@ -28,8 +25,19 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-func NewUserHandler(database *db.Database) *UserHandler {
-	return &UserHandler{db: database}
+type CreateUserRequest struct {
+	Email      string `json:"email" binding:"required,email"`
+	Username   string `json:"username" binding:"required,min=3,max=50"`
+	Password   string `json:"password" binding:"required,min=12,max=60"`
+	InviteCode string `json:"invite_code"`
+}
+
+type UserResponse struct {
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+	IsAdmin  bool   `json:"is_admin"`
 }
 
 // RegisterUser godoc
@@ -45,49 +53,33 @@ func NewUserHandler(database *db.Database) *UserHandler {
 // @Failure     500 {object} map[string]string "Interner Fehler"
 // @Router      /users [post]
 func (h *UserHandler) RegisterUser(c *gin.Context) {
-	// 1. Bind JSON Request zu CreateUserRequest DTO
 	var req CreateUserRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültiger Request-Body: " + err.Error(),
-		})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
 
-	// 2. Validierung der Input-Felder
 	if req.Email == "" || req.Username == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Email und Username sind erforderlich",
-		})
+		badRequest(c, msgEmailUsernameReq)
 		return
 	}
 
-	// Validiere Email Format (einfache Prüfung)
 	if len(req.Email) < 5 || len(req.Email) > 100 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Email muss zwischen 5 und 100 Zeichen lang sein",
-		})
+		badRequest(c, msgEmailLength)
 		return
 	}
 
-	// Validiere Username Länge
 	if len(req.Username) < 3 || len(req.Username) > 50 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Username muss zwischen 3 und 50 Zeichen lang sein",
-		})
+		badRequest(c, msgUsernameLength)
 		return
 	}
 
-	// Validiere Password Länge
 	if len(req.Password) < 12 || len(req.Password) > 60 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Password must be between 12 and 60 characters long",
-		})
+		badRequest(c, msgPasswordLength)
 		return
 	}
 
-	// 3. Prüfe enable_registration Setting und validiere Invite Code
+	// Prüfe enable_registration Setting und validiere Invite Code
 	var registrationSetting models.Settings
 	inviteSvc := services.NewInviteService(h.db)
 	settingResult := h.db.DB.Where("name = ?", "enable_registration").First(&registrationSetting)
@@ -97,37 +89,31 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 
 	if !registrationEnabled {
 		if req.InviteCode == "" {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Registrierung ist deaktiviert. Ein Invite Code ist erforderlich.",
-			})
+			fail(c, http.StatusForbidden, msgInviteCodeRequired)
 			return
 		}
 		invite, err := inviteSvc.ValidateInviteCode(req.InviteCode)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			badRequest(c, msgInvalidInviteCode)
 			return
 		}
 		inviteToUse = invite
 	} else if req.InviteCode != "" {
 		invite, err := inviteSvc.ValidateInviteCode(req.InviteCode)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			badRequest(c, msgInvalidInviteCode)
 			return
 		}
 		inviteToUse = invite
 	}
 
-	// 4. Prüfe ob Email bereits existiert
 	var existingUser models.User
 	result := h.db.DB.Where("email = ?", req.Email).First(&existingUser)
 	if result.RowsAffected > 0 {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": "Email ist bereits registriert",
-		})
+		conflict(c, msgEmailTaken)
 		return
 	}
 
-	// 5. Erstelle neues User Objekt
 	user := models.User{
 		Email:    req.Email,
 		Username: req.Username,
@@ -135,33 +121,25 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		IsAdmin:  false,
 	}
 
-	var userService = services.NewUserService(h.db)
-
-	created, err := userService.CreateUser(user)
+	userService := services.NewUserService(h.db)
+	newUser, err := userService.CreateUser(user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		serverError(c, msgCreateUser)
 		return
 	}
 
-	// 6. Invite Code als verwendet markieren
+	// Invite Code als verwendet markieren
 	if inviteToUse != nil {
-		_ = inviteSvc.UseInviteCode(inviteToUse, created.ID)
+		_ = inviteSvc.UseInviteCode(inviteToUse, newUser.ID)
 	}
 
-	// Erzeuge JWT Token für neu registrierten Nutzer
-	token, err := auth.GenerateToken(created.ID)
+	token, err := auth.GenerateToken(newUser.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "konnte token nicht erstellen"})
+		serverError(c, msgTokenFailed)
 		return
 	}
 
-	// 6. Erfolgreiche Response mit neu erstelltem User + Token
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Benutzer erfolgreich erstellt",
-		"data":    newUserResponse(created, token),
-	})
+	created(c, msgUserCreated, newUserResponse(newUser, token))
 }
 
 // GetUserByID GET /api/v1/users/:id
@@ -169,48 +147,34 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 func (h *UserHandler) GetUserByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültige User ID",
-		})
+		badRequest(c, msgInvalidUserID)
 		return
 	}
 
-	// Direkt GORM nutzen
 	var user models.User
-	if err := h.db.DB.Preload("Collections").First(&user, uint(id)).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Benutzer nicht gefunden",
-		})
+	if err := h.db.DB.First(&user, uint(id)).Error; err != nil {
+		notFound(c, msgUserNotFound)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": user,
-	})
+	ok(c, newUserResponse(user, ""))
 }
 
 func (h *UserHandler) LoginUser(c *gin.Context) {
 	var userRequest LoginRequest
 	if err := c.ShouldBindJSON(&userRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültiger Request-Body: " + err.Error(),
-		})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
 
-	var userService = services.NewUserService(h.db)
+	userService := services.NewUserService(h.db)
 	user, token, err := userService.LoginUser(userRequest.Email, userRequest.Password)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "invalid login",
-		})
+		fail(c, http.StatusUnauthorized, msgInvalidLogin)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "login successful",
-		"data":    newUserResponse(user, token),
-	})
+	okMessage(c, msgLoginSuccessful, newUserResponse(user, token))
 }
 
 func newUserResponse(u models.User, token string) UserResponse {
@@ -221,12 +185,4 @@ func newUserResponse(u models.User, token string) UserResponse {
 		IsAdmin:  u.IsAdmin,
 		Token:    token,
 	}
-}
-
-type UserResponse struct {
-	ID       uint   `json:"id"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Token    string `json:"token"`
-	IsAdmin  bool   `json:"is_admin"`
 }
