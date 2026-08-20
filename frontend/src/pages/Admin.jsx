@@ -4,9 +4,11 @@ import './Admin.css';
 import { getCurrentUser } from '../services/userapi';
 import SettingsAPI from '../services/settingsapi';
 import Header from '../components/Header';
+import Editions from './Editions';
 
 const Admin = ({ onLogout, onNavigateBack }) => {
   const currentUser = getCurrentUser();
+  const [activeTab, setActiveTab] = useState('settings');
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,9 +21,11 @@ const Admin = ({ onLogout, onNavigateBack }) => {
       setTimeout(() => onNavigateBack(), 2000);
       return;
     }
-    
-    loadSettings();
-  }, []);
+
+    if (activeTab === 'settings') {
+      loadSettings();
+    }
+  }, [currentUser, activeTab]);
 
   const loadSettings = async () => {
     try {
@@ -85,6 +89,22 @@ const Admin = ({ onLogout, onNavigateBack }) => {
         {error && <div className="error-message">{error}</div>}
         {successMessage && <div className="success-message">{successMessage}</div>}
 
+        <div className="admin-tabs">
+          <button
+            className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'editions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('editions')}
+          >
+            Editions
+          </button>
+        </div>
+
+        {activeTab === 'settings' && (
         <div className="settings-section">
           <h2>Einstellungen</h2>
           
@@ -135,6 +155,10 @@ const Admin = ({ onLogout, onNavigateBack }) => {
             </div>
           )}
         </div>
+        )}
+        {activeTab === 'editions' && (
+          <Editions />
+        )}
       </main>
 
       <footer className="admin-footer">

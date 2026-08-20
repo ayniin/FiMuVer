@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"fimuver/internal/config"
@@ -48,7 +49,44 @@ func InitializeDatabase(cfg *config.DatabaseConfig) (*Database, error) {
 		return nil, fmt.Errorf("fehler beim Seeding der Settings: %w", err)
 	}
 
+	// Add default editions
+	if err := addDefaultEdition(db); err != nil {
+		return nil, fmt.Errorf("fehler beim Adding Edition: %w", err)
+	}
+
 	return &Database{DB: db}, nil
+}
+
+func addDefaultEdition(db *gorm.DB) error {
+	defaultEditions := []models.Edition{
+		{Name: "Keep Case"},
+		{Name: "SteelBook"},
+		{Name: "Mediabook"},
+	}
+	for _, edition := range defaultEditions {
+		var existing models.Edition
+		err := db.Where("name = ?", edition.Name).First(&existing).Error
+
+		// Wenn kein Fehler -> Eintrag existiert bereits, überspringen
+		if err == nil {
+			continue
+		}
+
+		// Wenn Record nicht gefunden -> anlegen
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if createErr := db.Create(&edition).Error; createErr != nil {
+				return fmt.Errorf("fehler beim Erstellen der Edition '%s': %w", edition.Name, createErr)
+			}
+			continue
+		}
+
+		// Andere Fehler weiterreichen
+		if err != nil {
+			return fmt.Errorf("fehler beim Prüfen der Edition '%s': %w", edition.Name, err)
+		}
+	}
+
+	return nil
 }
 
 // seedDefaultSettings erstellt Default-Settings wenn keine vorhanden sind

@@ -23,6 +23,7 @@ type CollectionDTO struct {
 func NewCollectionHandler(db *db.Database) *CollectionHandler {
 	return &CollectionHandler{db: db}
 }
+
 func (h *CollectionHandler) GetAllCollectionsForUser(c *gin.Context) {
 	userID, err := GetUserIDFromContext(c)
 	if err != nil {
@@ -123,5 +124,9 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"data": updated})
+	return
+}
+
+func newCollectionResponse(c models.Collection) {
 	return
 }

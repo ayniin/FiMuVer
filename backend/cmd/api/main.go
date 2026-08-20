@@ -63,6 +63,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
 	collectionHandler := handlers.NewCollectionHandler(database)
+	editionHandler := handlers.NewEditionHandler(database)
 
 	api := router.Group("/api/v1")
 	{
@@ -92,6 +93,11 @@ func main() {
 			// GET /api/v1/collections -> returns collections for the authenticated user (user_id from JWT)
 			collections.GET("", collectionHandler.GetAllCollectionsForUser)
 			collections.POST("", collectionHandler.CreateCollection)
+		}
+
+		editions := secure.Group("/editions")
+		{
+			editions.GET("", editionHandler.GetAllEditions)
 		}
 	}
 

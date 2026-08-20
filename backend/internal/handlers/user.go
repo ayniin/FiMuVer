@@ -16,8 +16,8 @@ type UserHandler struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,min=3,max=50"`
-	Password string `json:"password" binding:"required,min=12,max=60"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
 }
 
 func NewUserHandler(database *db.Database) *UserHandler {
@@ -116,13 +116,7 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 	// 6. Erfolgreiche Response mit neu erstelltem User + Token
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Benutzer erfolgreich erstellt",
-		"data": gin.H{
-			"id":       created.ID,
-			"email":    created.Email,
-			"username": created.Username,
-			"token":    token,
-			"is_admin": created.IsAdmin,
-		},
+		"data":    newUserResponse(created, token),
 	})
 }
 
@@ -154,7 +148,10 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 func (h *UserHandler) LoginUser(c *gin.Context) {
 	var userRequest LoginRequest
 	if err := c.ShouldBindJSON(&userRequest); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Ungültiger Request-Body: " + err.Error(),
+		})
+		return
 	}
 
 	var userService = services.NewUserService(h.db)
@@ -168,14 +165,18 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
-		"data": gin.H{
-			"id":       user.ID,
-			"email":    user.Email,
-			"username": user.Username,
-			"token":    token,
-			"is_admin": user.IsAdmin,
-		},
+		"data":    newUserResponse(user, token),
 	})
+}
+
+func newUserResponse(u models.User, token string) UserResponse {
+	return UserResponse{
+		ID:       u.ID,
+		Email:    u.Email,
+		Username: u.Username,
+		IsAdmin:  u.IsAdmin,
+		Token:    token,
+	}
 }
 
 // CreateUserRequest DTO für User-Erstellung
@@ -183,4 +184,12 @@ type CreateUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Username string `json:"username" binding:"required,min=3,max=50"`
 	Password string `json:"password" binding:"required,min=12,max=60"`
+}
+
+type UserResponse struct {
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Token    string `json:"token"`
+	IsAdmin  bool   `json:"is_admin"`
 }
