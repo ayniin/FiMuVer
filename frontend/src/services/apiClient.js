@@ -2,11 +2,24 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 
 const getAuthToken = () => {
   try {
-    return sessionStorage.getItem('auth_token');
+    const directToken = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
+    if (directToken) {
+      return directToken;
+    }
+
+    const userMetadata = localStorage.getItem('user_metadata');
+    if (userMetadata) {
+      const parsedMetadata = JSON.parse(userMetadata);
+      return parsedMetadata?.auth_token || null;
+    }
+
+    return null;
   } catch {
     return null;
   }
 };
+
+export { getAuthToken };
 
 /**
  * CSRF Token aus Cookie auslesen

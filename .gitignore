@@ -13,6 +13,7 @@ backend/docs/
 backend/docs.go
 
 # IDE
+.serena/
 .idea/
 .vscode/
 *.swp

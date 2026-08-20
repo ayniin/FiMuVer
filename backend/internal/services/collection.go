@@ -3,6 +3,8 @@ package services
 import (
 	"fmt"
 
+	"gorm.io/gorm/clause"
+
 	"fimuver/internal/db"
 	"fimuver/internal/models"
 )
@@ -69,13 +71,16 @@ func (s *CollectionService) UpdateCollection(id uint, updates models.Collection)
 	return col, nil
 }
 
-func (s *CollectionService) DeleteCollection(id uint, userID uint) error {
-	result := s.db.DB.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Collection{})
+func (s *CollectionService) DeleteCollection(id uint, userID uint) (*models.Collection, error) {
+	var col models.Collection
+	result := s.db.DB.Clauses(clause.Returning{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Delete(&col)
 	if result.Error != nil {
-		return fmt.Errorf("failed to delete collection: %w", result.Error)
+		return nil, fmt.Errorf("failed to delete collection: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("collection not found or no permission")
+		return nil, fmt.Errorf("collection not found or no permission")
 	}
-	return nil
+	return &col, nil
 }

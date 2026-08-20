@@ -68,16 +68,19 @@ class UserAPI {
    * Speichere öffentliche User-Metadaten und den JWT-Token für API-Calls.
    */
   static saveUserMetadata(data) {
+    const authData = data?.data || data || {};
     const metadata = {
-      id: data.id,
-      username: data.username,
-      email: data.email,
-      is_admin: data.is_admin,
+      id: authData.id,
+      username: authData.username,
+      email: authData.email,
+      is_admin: authData.is_admin,
+      auth_token: authData.token || authData.auth_token || authData.access_token || null,
     };
     localStorage.setItem('user_metadata', JSON.stringify(metadata));
 
-    if (data.token) {
-      sessionStorage.setItem('auth_token', data.token);
+    if (metadata.auth_token) {
+      sessionStorage.setItem('auth_token', metadata.auth_token);
+      localStorage.setItem('auth_token', metadata.auth_token);
     }
   }
 
@@ -93,6 +96,7 @@ class UserAPI {
       // LocalStorage löschen
       localStorage.removeItem('user_metadata');
       sessionStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_token');
     }
   }
 }

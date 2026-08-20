@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-
 	"fimuver/internal/config"
 	"fimuver/internal/services"
 
@@ -14,7 +12,6 @@ type TVDBHandler struct {
 }
 
 func NewTVDBHandler(cfg *config.TVDBConfig) *TVDBHandler {
-
 	return &TVDBHandler{
 		tvdbClient: services.NewTVDBClient(cfg),
 	}
@@ -23,35 +20,31 @@ func NewTVDBHandler(cfg *config.TVDBConfig) *TVDBHandler {
 func (h *TVDBHandler) SearchSeries(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query-Parameter 'q' fehlt"})
+		badRequest(c, msgMissingQueryParam)
 		return
 	}
 
 	results, err := h.tvdbClient.SearchSeries(query)
 	if err != nil {
-
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		badGateway(c, msgTVDBUnavailable)
 		return
-
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": results})
-
+	ok(c, results)
 }
 
 func (h *TVDBHandler) SearchMovies(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Query-Parameter 'q' fehlt"})
+		badRequest(c, msgMissingQueryParam)
 		return
 	}
 
 	results, err := h.tvdbClient.SearchMovies(query)
 	if err != nil {
-
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		badGateway(c, msgTVDBUnavailable)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": results})
+	ok(c, results)
 }

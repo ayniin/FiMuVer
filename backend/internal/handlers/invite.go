@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"fimuver/internal/db"
-	"fimuver/internal/services"
-	"net/http"
 	"strconv"
 	"time"
+
+	"fimuver/internal/db"
+	"fimuver/internal/models"
+	"fimuver/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +24,17 @@ type GenerateInviteRequest struct {
 	ExpiresAt string `json:"expires_at"` // ISO 8601, optional
 }
 
+type InviteResponse struct {
+	ID          uint       `json:"id"`
+	Code        string     `json:"code"`
+	MaxUses     int        `json:"max_uses"`
+	CurrentUses int        `json:"current_uses"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	UsedAt      *time.Time `json:"used_at"`
+	ExpiresAt   *time.Time `json:"expires_at"`
+}
+
 func (h *InviteHandler) GenerateInviteCode(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -35,7 +47,7 @@ func (h *InviteHandler) GenerateInviteCode(c *gin.Context) {
 	if req.ExpiresAt != "" {
 		t, err := time.Parse(time.RFC3339, req.ExpiresAt)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "ungültiges Datumsformat, erwartet ISO 8601"})
+			badRequest(c, msgInvalidDateFormat)
 			return
 		}
 		expiresAt = &t
@@ -44,14 +56,11 @@ func (h *InviteHandler) GenerateInviteCode(c *gin.Context) {
 	svc := services.NewInviteService(h.db)
 	invite, err := svc.CreateInviteCode(userID, req.MaxUses, expiresAt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		serverError(c, msgCreateInvite)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Invite Code erstellt",
-		"data":    invite,
-	})
+	created(c, msgInviteCreated, newInviteResponse(*invite))
 }
 
 func (h *InviteHandler) ListInviteCodes(c *gin.Context) {
@@ -60,11 +69,11 @@ func (h *InviteHandler) ListInviteCodes(c *gin.Context) {
 	svc := services.NewInviteService(h.db)
 	codes, err := svc.GetInviteCodesByUser(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		serverError(c, msgFetchInvites)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": codes})
+	ok(c, newInviteArrayResponse(codes))
 }
 
 func (h *InviteHandler) DeleteInviteCode(c *gin.Context) {
@@ -72,15 +81,36 @@ func (h *InviteHandler) DeleteInviteCode(c *gin.Context) {
 
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ungültige ID"})
+		badRequest(c, msgInvalidInviteID)
 		return
 	}
 
 	svc := services.NewInviteService(h.db)
 	if err := svc.DeleteInviteCode(uint(id), userID); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		notFound(c, msgInviteNotFound)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Invite Code gelöscht"})
+	okMessage(c, msgInviteDeleted, nil)
+}
+
+func newInviteArrayResponse(codes []models.InviteCode) []InviteResponse {
+	invites := make([]InviteResponse, 0, len(codes))
+	for _, code := range codes {
+		invites = append(invites, newInviteResponse(code))
+	}
+	return invites
+}
+
+func newInviteResponse(i models.InviteCode) InviteResponse {
+	return InviteResponse{
+		ID:          i.ID,
+		Code:        i.Code,
+		MaxUses:     i.MaxUses,
+		CurrentUses: i.CurrentUses,
+		CreatedAt:   i.CreatedAt,
+		UpdatedAt:   i.UpdatedAt,
+		UsedAt:      i.UsedAt,
+		ExpiresAt:   i.ExpiresAt,
+	}
 }

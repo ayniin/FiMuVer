@@ -5,14 +5,11 @@ import { getCurrentUser } from '../services/userapi';
 import CollectionAPI from '../services/collection';
 import Header from '../components/Header';
 import CreateCollectionModal from '../components/CreateCollectionModal';
+import { getAuthToken } from '../services/apiClient';
 import InviteCodes from '../components/InviteCodes';
 
 const hasAuthToken = () => {
-  try {
-    return Boolean(sessionStorage.getItem('auth_token'));
-  } catch {
-    return false;
-  }
+  return Boolean(getAuthToken());
 };
 
 const Landing = ({ user, onLogout, onNavigateToAdmin, onNavigateToCollection }) => {

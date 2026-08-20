@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"net/http"
 	"strconv"
 
 	"fimuver/internal/db"
@@ -19,54 +18,53 @@ func NewSettingsHandler(database *db.Database) *SettingsHandler {
 	return &SettingsHandler{db: database}
 }
 
+// CreateSettingRequest für neue Settings
+type CreateSettingRequest struct {
+	Name  string `json:"name" binding:"required"`
+	Value bool   `json:"value"`
+}
+
+// UpdateSettingRequest für Settings-Updates
+type UpdateSettingRequest struct {
+	Value bool `json:"value"`
+}
+
+type SettingResponse struct {
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`
+	Value bool   `json:"value"`
+}
+
 // GetAllSettings GET /api/v1/settings
-// Holt alle Einstellungen
 func (h *SettingsHandler) GetAllSettings(c *gin.Context) {
 	var settings []models.Settings
 
 	if err := h.db.DB.Find(&settings).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Fehler beim Abrufen der Settings",
-		})
+		serverError(c, msgFetchSettings)
 		return
 	}
 
-	if settings == nil {
-		settings = []models.Settings{}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": settings,
-	})
+	ok(c, newSettingArrayResponse(settings))
 }
 
 // GetSettingByName GET /api/v1/settings/:name
-// Holt eine einzelne Einstellung nach Name
 func (h *SettingsHandler) GetSettingByName(c *gin.Context) {
 	name := c.Param("name")
-
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Setting-Name ist erforderlich",
-		})
+		badRequest(c, msgSettingNameReq)
 		return
 	}
 
 	var setting models.Settings
 	if err := h.db.DB.Where("name = ?", name).First(&setting).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Setting nicht gefunden",
-		})
+		notFound(c, msgSettingNotFound)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": setting,
-	})
+	ok(c, newSettingResponse(setting))
 }
 
 // UpdateSetting PUT /api/v1/settings/:name
-// Aktualisiert eine Einstellung nach Name
 // @Summary     Setting aktualisieren
 // @Description Aktualisiert eine Anwendungs-Einstellung
 // @Tags        Settings
@@ -81,50 +79,33 @@ func (h *SettingsHandler) GetSettingByName(c *gin.Context) {
 // @Router      /settings/{name} [put]
 func (h *SettingsHandler) UpdateSetting(c *gin.Context) {
 	name := c.Param("name")
-
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Setting-Name ist erforderlich",
-		})
+		badRequest(c, msgSettingNameReq)
 		return
 	}
 
 	var req UpdateSettingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültiger Request-Body",
-		})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
 
-	// Prüfe ob Setting existiert
 	var existing models.Settings
 	if err := h.db.DB.Where("name = ?", name).First(&existing).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Setting nicht gefunden",
-		})
+		notFound(c, msgSettingNotFound)
 		return
 	}
 
-	// Aktualisiere
 	if err := h.db.DB.Model(&existing).Update("value", req.Value).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Fehler beim Aktualisieren des Settings",
-		})
+		serverError(c, msgUpdateSetting)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Setting erfolgreich aktualisiert",
-		"data": gin.H{
-			"name":  existing.Name,
-			"value": req.Value,
-		},
-	})
+	existing.Value = req.Value
+	okMessage(c, msgSettingUpdated, newSettingResponse(existing))
 }
 
 // CreateSetting POST /api/v1/settings
-// Erstellt eine neue Einstellung
 // @Summary     Setting erstellen
 // @Description Erstellt eine neue Anwendungs-Einstellung
 // @Tags        Settings
@@ -138,53 +119,37 @@ func (h *SettingsHandler) UpdateSetting(c *gin.Context) {
 // @Router      /settings [post]
 func (h *SettingsHandler) CreateSetting(c *gin.Context) {
 	var req CreateSettingRequest
-
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültiger Request-Body",
-		})
+		badRequest(c, msgInvalidRequestBody)
 		return
 	}
 
-	// Validierung
 	if req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Name ist erforderlich",
-		})
+		badRequest(c, msgSettingNameReq)
 		return
 	}
 
-	// Prüfe ob Setting bereits existiert
 	var existing models.Settings
 	result := h.db.DB.Where("name = ?", req.Name).First(&existing)
 	if result.RowsAffected > 0 {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": "Setting mit diesem Namen existiert bereits",
-		})
+		conflict(c, msgSettingExists)
 		return
 	}
 
-	// Erstelle neues Setting
 	setting := models.Settings{
 		Name:  req.Name,
 		Value: req.Value,
 	}
 
 	if err := h.db.DB.Create(&setting).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Fehler beim Erstellen des Settings",
-		})
+		serverError(c, msgCreateSetting)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Setting erfolgreich erstellt",
-		"data":    setting,
-	})
+	created(c, msgSettingCreated, newSettingResponse(setting))
 }
 
 // DeleteSetting DELETE /api/v1/settings/:id
-// Löscht ein Setting
 // @Summary     Setting löschen
 // @Description Löscht eine Anwendungs-Einstellung
 // @Tags        Settings
@@ -199,43 +164,36 @@ func (h *SettingsHandler) CreateSetting(c *gin.Context) {
 func (h *SettingsHandler) DeleteSetting(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Ungültige Setting ID",
-		})
+		badRequest(c, msgInvalidSettingID)
 		return
 	}
 
-	// Prüfe ob Setting existiert
 	var setting models.Settings
 	if err := h.db.DB.First(&setting, uint(id)).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Setting nicht gefunden",
-		})
+		notFound(c, msgSettingNotFound)
 		return
 	}
 
-	// Lösche
 	if err := h.db.DB.Delete(&setting).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Fehler beim Löschen des Settings",
-		})
+		serverError(c, msgDeleteSetting)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Setting erfolgreich gelöscht",
-	})
+	okMessage(c, msgSettingDeleted, nil)
 }
 
-// Request DTOs
-
-// CreateSettingRequest für neue Settings
-type CreateSettingRequest struct {
-	Name  string `json:"name" binding:"required"`
-	Value bool   `json:"value"`
+func newSettingArrayResponse(s []models.Settings) []SettingResponse {
+	settings := make([]SettingResponse, 0, len(s))
+	for _, set := range s {
+		settings = append(settings, newSettingResponse(set))
+	}
+	return settings
 }
 
-// UpdateSettingRequest für Settings-Updates
-type UpdateSettingRequest struct {
-	Value bool `json:"value"`
+func newSettingResponse(s models.Settings) SettingResponse {
+	return SettingResponse{
+		ID:    s.ID,
+		Name:  s.Name,
+		Value: s.Value,
+	}
 }

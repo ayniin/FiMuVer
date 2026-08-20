@@ -68,6 +68,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(database)
 	settingsHandler := handlers.NewSettingsHandler(database)
 	collectionHandler := handlers.NewCollectionHandler(database)
+	editionHandler := handlers.NewEditionHandler(database)
 	itemHandler := handlers.NewItemHandler(database)
 	inviteHandler := handlers.NewInviteHandler(database)
 	tvdbHandler := handlers.NewTVDBHandler(&cfg.TVDB)
@@ -118,6 +119,11 @@ func main() {
 		{
 			tvdb.GET("/search/series", tvdbHandler.SearchSeries)
 			tvdb.GET("/search/movies", tvdbHandler.SearchMovies)
+		}
+
+		editions := secure.Group("/editions")
+		{
+			editions.GET("", editionHandler.GetAllEditions)
 		}
 	}
 
