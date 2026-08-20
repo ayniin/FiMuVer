@@ -1,90 +1,59 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+import { apiGet, apiPut, apiDelete } from './apiClient';
 
-// Helper-Funktion für headers mit token
-const getHeaders = (additionalHeaders = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...additionalHeaders,
-  };
-
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (user?.token) {
-    headers['Authorization'] = `Bearer ${user.token}`;
-  }
-
-  return headers;
-};
+/**
+ * SICHERHEIT: Alle API-Requests nutzen den sicheren apiClient mit:
+ * - HttpOnly Cookie Auth (credentials: 'include')
+ * - CSRF-Token Protection
+ * - Zentrales Error Handling
+ */
 
 class SettingsAPI {
-      // ========== SETTINGS ENDPOINTS ==========
-
-  // Alle Settings abrufen
+  /**
+   * Alle Settings abrufen
+   */
   static async getAllSettings() {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings`, {
-        headers: getHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.data || [];
+      const response = await apiGet('/settings');
+      return response?.data || [];
     } catch (error) {
       console.error('Fehler beim Abrufen der Settings:', error);
       throw error;
     }
   }
 
-  // Setting nach Name abrufen
+  /**
+   * Setting nach Name abrufen
+   */
   static async getSettingByName(name) {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/${name}`, {
-        headers: getHeaders(),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data.data;
+      const response = await apiGet(`/settings/${name}`);
+      return response?.data;
     } catch (error) {
       console.error(`Fehler beim Abrufen des Settings ${name}:`, error);
       throw error;
     }
   }
 
-  // Setting aktualisieren
+  /**
+   * Setting aktualisieren
+   */
   static async updateSetting(name, settingData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/${name}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(settingData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data;
+      const response = await apiPut(`/settings/${name}`, settingData);
+      return response;
     } catch (error) {
       console.error(`Fehler beim Aktualisieren des Settings ${name}:`, error);
       throw error;
     }
   }
 
-  // Setting löschen
+  /**
+   * Setting löschen
+   */
   static async deleteSetting(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/settings/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data;
+      const response = await apiDelete(`/settings/${id}`);
+      return response;
     } catch (error) {
       console.error(`Fehler beim Löschen des Settings ${id}:`, error);
       throw error;
@@ -92,11 +61,9 @@ class SettingsAPI {
   }
 }
 
-
-// Exportiere die Funktionen als benannte Exports für die Kompatibilität mit Auth.jsx
-export const getAllSettings = SettingsAPI.getAllSettings;
-export const getSettingByName = SettingsAPI.getSettingByName;
-export const updateSetting = SettingsAPI.updateSetting;
-export const deleteSetting = SettingsAPI.deleteSetting;
+export const getAllSettings = SettingsAPI.getAllSettings.bind(SettingsAPI);
+export const getSettingByName = SettingsAPI.getSettingByName.bind(SettingsAPI);
+export const updateSetting = SettingsAPI.updateSetting.bind(SettingsAPI);
+export const deleteSetting = SettingsAPI.deleteSetting.bind(SettingsAPI);
 
 export default SettingsAPI;

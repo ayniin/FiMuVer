@@ -7,7 +7,7 @@ server:
   port: 8080
 
 database:
-  host: "postgres"
+  host: "192.168.178.211"
   port: 5432
   user: "fimuver_user"
   password: "fimuver_password"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiArrowRight, FiPackage } from 'react-icons/fi';
 import './Landing.css';
 import { getCurrentUser } from '../services/userapi';
 import CollectionAPI from '../services/collection';
@@ -6,7 +7,15 @@ import Header from '../components/Header';
 import CreateCollectionModal from '../components/CreateCollectionModal';
 import InviteCodes from '../components/InviteCodes';
 
-const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) => {
+const hasAuthToken = () => {
+  try {
+    return Boolean(sessionStorage.getItem('auth_token'));
+  } catch {
+    return false;
+  }
+};
+
+const Landing = ({ user, onLogout, onNavigateToAdmin, onNavigateToCollection }) => {
   const currentUser = getCurrentUser();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +24,13 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    loadCollections();
+    if (hasAuthToken()) {
+      loadCollections();
+      return;
+    }
+
+    setCollections([]);
+    setLoading(false);
   }, []);
 
   const loadCollections = async () => {
@@ -64,7 +79,14 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
     }
 };
 
-  console.log('Aktueller Benutzer in Landing:', currentUser);
+  const handleEditCollection = async (id) => {
+    try {
+      // TODO: Hardcoded Name
+        await CollectionAPI.updateCollection(id, { name: 'Neuer Name' });
+    } catch (err) {
+        setError(err.message || 'Fehler beim Aktualisieren der Collection');
+    }
+  };
 
   return (
     <div className="landing-container">
@@ -79,8 +101,10 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
           <button 
             className="btn-create-collection"
             onClick={() => setShowModal(true)}
+            aria-label="Neue Collection erstellen"
           >
-            ➕ Neue Collection
+            <FiPlus size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+            Neue Collection
           </button>
         </div>
 
@@ -91,14 +115,18 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
 
         {!loading && collections.length === 0 && (
           <div className="empty-state">
-            <div className="empty-icon">📦</div>
+            <div className="empty-icon">
+              <FiPackage size={64} />
+            </div>
             <h2>Noch keine Sammlungen</h2>
             <p>Erstelle deine erste Collection um Medien zu verwalten</p>
             <button 
               className="btn-create-collection btn-large"
               onClick={() => setShowModal(true)}
+              aria-label="Erste Collection erstellen"
             >
-              ➕ Erste Collection erstellen
+              <FiPlus size={20} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              Erste Collection erstellen
             </button>
           </div>
         )}
@@ -109,11 +137,21 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
               <div key={collection.id} className="collection-card">
                 <div className="collection-header">
                   <h3>{collection.name}</h3>
+                  <button
+                    className="btn-edit"
+                    onClick={() => handleEditCollection(collection.id)}
+                    title="Editieren"
+                    aria-label="Collection bearbeiten"
+                  >
+                    <FiEdit2 size={18} />
+                  </button>
                   <button 
                     className="btn-delete"
                     onClick={() => handleDeleteCollection(collection.id, collection.name)}
+                    title="Löschen"
+                    aria-label="Collection löschen"
                   >
-                    🗑️
+                    <FiTrash2 size={18} />
                   </button>
                 </div>
                 <p className="collection-description">
@@ -126,8 +164,9 @@ const Landing = ({ user, onLogout, onNavigateToAdmin , onNavigateToCollection}) 
                   <button className="btn-open"
                     onClick={() => handleOpenCollection(collection)}
                     title="Öffnen"
+                    aria-label="Collection öffnen"
                   >  
-                    Öffnen →
+                    Öffnen <FiArrowRight size={16} style={{ marginLeft: '6px', verticalAlign: 'middle' }} />
                   </button>
                 </div>
               </div>
