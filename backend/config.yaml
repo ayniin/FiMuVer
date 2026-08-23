@@ -17,3 +17,9 @@ database:
 tvdb:
   tvdb_api_key: ""
   base_url: "https://api4.thetvdb.com/v4"
+
+
+tmdb:
+  tmdb_api_key: ""
+  base_url: "https://api.themoviedb.org/3"
+  image_base_url: "https://image.tmdb.org/t/p/w500"

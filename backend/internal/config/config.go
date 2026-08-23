@@ -22,6 +22,12 @@ type TVDBConfig struct {
 	BaseURL    string `yaml:"base_url"`
 }
 
+type TMBDConfig struct {
+	TmdbApiKey string `yaml:"tmdb_api_key"`
+	BaseURL    string `yaml:"base_url"`
+	ImageBaseURL string `yaml:"image_base_url"`
+}
+
 type ServerConfig struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
@@ -36,6 +42,7 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	TVDB     TVDBConfig     `yaml:"tvdb"`
+	TMDB     TMBDConfig     `yaml:"tmdb"`
 	JWT      JWTConfig      `yaml:"jwt"`
 }
 
@@ -100,6 +107,21 @@ func LoadConfig(filepath string) (*Config, error) {
 		cfg.TVDB.BaseURL = "https://api4.thetvdb.com/v4"
 	}
 
+	if tmdbApiKey := os.Getenv("TMDB_API_KEY"); tmdbApiKey != "" {
+                cfg.TMDB.ApiKey = tmdbApiKey
+    }
+    if tmdbBaseURL := os.Getenv("TMDB_BASE_URL"); tmdbBaseURL != "" {
+            cfg.TMDB.BaseURL = tmdbBaseURL
+        }
+
+    if cfg.TMDB.BaseURL == "" {
+           cfg.TMDB.BaseURL = "https://api.themoviedb.org/3"
+        }
+
+    if cfg.TMDB.ImageBaseURL == "" {
+            cfg.TMDB.ImageBaseURL = "https://image.tmdb.org/t/p/w500"
+
+			
 	return &cfg, nil
 }
 
