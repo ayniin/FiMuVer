@@ -159,7 +159,7 @@ func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
 }
 
 func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
-	collections := make([]CollectionResponse, len(c))
+	collections := make([]CollectionResponse, 0)
 	for _, col := range c {
 		collections = append(collections, CollectionResponse{
 			ID:          col.ID,
