@@ -72,6 +72,8 @@ func main() {
 	itemHandler := handlers.NewItemHandler(database)
 	inviteHandler := handlers.NewInviteHandler(database)
 	tvdbHandler := handlers.NewTVDBHandler(&cfg.TVDB)
+	tmdbHandler := handlers.NewTMDBHandler(&cfg.TMDB)
+	discogsHandler := handlers.NewDiscogsHandler(&cfg.Discogs)
 
 	api := router.Group("/api/v1")
 	{
@@ -119,6 +121,19 @@ func main() {
 		{
 			tvdb.GET("/search/series", tvdbHandler.SearchSeries)
 			tvdb.GET("/search/movies", tvdbHandler.SearchMovies)
+		}
+
+		tmdb := secure.Group("/tmdb")
+		{
+			tmdb.GET("/search/movies", tmdbHandler.SearchMovies)
+			tmdb.GET("/search/series", tmdbHandler.SearchSeries)
+		}
+
+		discogs := secure.Group("/discogs")
+		{
+			discogs.GET("/search/releases", discogsHandler.SearchReleases)
+			discogs.GET("/search/masters", discogsHandler.SearchMasters)
+			discogs.GET("/search/artists", discogsHandler.SearchArtists)
 		}
 
 		editions := secure.Group("/editions")
