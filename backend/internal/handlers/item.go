@@ -6,6 +6,7 @@ import (
 
 	"fimuver/internal/db"
 	"fimuver/internal/models"
+	"fimuver/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -59,6 +60,18 @@ func (h *ItemHandler) AddItem(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetUint("user_id")
+	collSvc := services.NewCollectionService(h.db)
+	collection, err := collSvc.GetCollectionByID(uint(collectionID))
+	if err != nil {
+		notFound(c, msgCollectionNotFound)
+		return
+	}
+	if collection.UserID != userID {
+		forbidden(c)
+		return
+	}
+
 	var req ItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		badRequest(c, msgInvalidRequestBody)
@@ -94,10 +107,85 @@ func (h *ItemHandler) AddItem(c *gin.Context) {
 	created(c, msgItemCreated, newItemResponse(item))
 }
 
+func (h *ItemHandler) UpdateItem(c *gin.Context) {
+	itemID, err := strconv.ParseUint(c.Param("itemId"), 10, 64)
+	if err != nil {
+		badRequest(c, msgInvalidItemID)
+		return
+	}
+
+	var item models.Item
+	if err := h.db.DB.First(&item, itemID).Error; err != nil {
+		notFound(c, msgItemNotFound)
+		return
+	}
+
+	userID := c.GetUint("user_id")
+	collSvc := services.NewCollectionService(h.db)
+	collection, err := collSvc.GetCollectionByID(item.CollectionID)
+	if err != nil {
+		notFound(c, msgCollectionNotFound)
+		return
+	}
+	if collection.UserID != userID {
+		forbidden(c)
+		return
+	}
+
+	var req ItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequest(c, msgInvalidRequestBody)
+		return
+	}
+
+	if req.Title == "" {
+		badRequest(c, msgTitleRequired)
+		return
+	}
+
+	item.Title = req.Title
+	item.Description = req.Description
+	item.MediaType = req.MediaType
+	item.Artist = req.Artist
+	item.Director = req.Director
+	item.Year = req.Year
+	item.Genre = req.Genre
+	item.Condition = req.Condition
+	item.Location = req.Location
+	item.Notes = req.Notes
+	item.TVDBID = req.TVDBID
+	item.ImageURL = req.ImageURL
+
+	if err := h.db.DB.Save(&item).Error; err != nil {
+		serverError(c, msgUpdateItem)
+		return
+	}
+
+	okMessage(c, msgItemUpdated, newItemResponse(item))
+}
+
 func (h *ItemHandler) DeleteItem(c *gin.Context) {
 	itemID, err := strconv.ParseUint(c.Param("itemId"), 10, 64)
 	if err != nil {
 		badRequest(c, msgInvalidItemID)
+		return
+	}
+
+	var item models.Item
+	if err := h.db.DB.First(&item, itemID).Error; err != nil {
+		notFound(c, msgItemNotFound)
+		return
+	}
+
+	userID := c.GetUint("user_id")
+	collSvc := services.NewCollectionService(h.db)
+	collection, err := collSvc.GetCollectionByID(item.CollectionID)
+	if err != nil {
+		notFound(c, msgCollectionNotFound)
+		return
+	}
+	if collection.UserID != userID {
+		forbidden(c)
 		return
 	}
 

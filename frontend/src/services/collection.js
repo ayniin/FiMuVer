@@ -72,6 +72,45 @@ class CollectionAPI {
       throw error;
     }
   }
+
+  /**
+   * Item einer Collection hinzufügen
+   */
+  static async addItem(collectionId, itemData) {
+    try {
+      const response = await apiPost(`/collections/${collectionId}/items`, itemData);
+      return response?.data;
+    } catch (error) {
+      console.error(`Fehler beim Erstellen des Items in Collection ${collectionId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Item einer Collection aktualisieren
+   */
+  static async updateItem(collectionId, itemId, itemData) {
+    try {
+      const response = await apiPut(`/collections/${collectionId}/items/${itemId}`, itemData);
+      return response?.data;
+    } catch (error) {
+      console.error(`Fehler beim Aktualisieren des Items ${itemId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Item aus einer Collection löschen
+   */
+  static async deleteItem(collectionId, itemId) {
+    try {
+      const response = await apiDelete(`/collections/${collectionId}/items/${itemId}`);
+      return response;
+    } catch (error) {
+      console.error(`Fehler beim Löschen des Items ${itemId}:`, error);
+      throw error;
+    }
+  }
 }
 
 export const getAllCollectionsForUser = CollectionAPI.getAllCollectionsForUser.bind(CollectionAPI);
@@ -79,5 +118,8 @@ export const getCollectionById = CollectionAPI.getCollectionById.bind(Collection
 export const createCollection = CollectionAPI.createCollection.bind(CollectionAPI);
 export const updateCollection = CollectionAPI.updateCollection.bind(CollectionAPI);
 export const deleteCollection = CollectionAPI.deleteCollection.bind(CollectionAPI);
+export const addItem = CollectionAPI.addItem.bind(CollectionAPI);
+export const updateItem = CollectionAPI.updateItem.bind(CollectionAPI);
+export const deleteItem = CollectionAPI.deleteItem.bind(CollectionAPI);
 
 export default CollectionAPI;

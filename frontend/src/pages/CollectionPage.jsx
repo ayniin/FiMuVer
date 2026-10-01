@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import CollectionAPI from '../services/collection';
-import { addItemToCollection } from '../services/api';
 import MediaCard from '../components/MediaCard';
 import MediaForm from '../components/MediaForm';
 import Header from '../components/Header';
@@ -30,11 +29,21 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
 
   const handleAddItem = async (formData) => {
     try {
-      const newItem = await addItemToCollection(collection.id, formData);
+      const newItem = await CollectionAPI.addItem(collection.id, formData);
       setItems([...items, newItem]);
       setShowForm(false);
     } catch (err) {
       setError(err.message || 'Fehler beim Erstellen des Eintrags');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    if (!window.confirm('Diesen Eintrag wirklich löschen?')) return;
+    try {
+      await CollectionAPI.deleteItem(collection.id, itemId);
+      setItems(items.filter((item) => item.id !== itemId));
+    } catch (err) {
+      setError(err.message || 'Fehler beim Löschen des Eintrags');
     }
   };
 
@@ -80,7 +89,7 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
                 key={item.id}
                 media={item}
                 onEdit={() => onNavigateToItem(item)}
-                onDelete={() => {}}
+                onDelete={() => handleDeleteItem(item.id)}
               />
             ))}
           </div>

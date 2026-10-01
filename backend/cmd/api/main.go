@@ -79,7 +79,6 @@ func main() {
 		users := api.Group("/users")
 		{
 			users.POST("", userHandler.RegisterUser)
-			users.GET("/:id", userHandler.GetUserByID)
 			users.POST("login", userHandler.LoginUser)
 			users.POST("register", userHandler.RegisterUser)
 		}
@@ -88,6 +87,8 @@ func main() {
 	secure := api.Group("")
 	secure.Use(middleware.JWTAuthMiddleware())
 	{
+		secure.GET("/users/:id", userHandler.GetUserByID)
+
 		settings := secure.Group("/settings")
 		{
 			settings.GET("", settingsHandler.GetAllSettings)
@@ -104,6 +105,7 @@ func main() {
 			collections.PUT("/:id", collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", collectionHandler.DeleteCollection)
 			collections.POST("/:id/items", itemHandler.AddItem)
+			collections.PUT("/:id/items/:itemId", itemHandler.UpdateItem)
 			collections.DELETE("/:id/items/:itemId", itemHandler.DeleteItem)
 
 		}

@@ -1,36 +1,36 @@
 # FiMuVer - Medienverwaltungs-Software
 
-FiMuVer ist eine Full-Stack-Anwendung zum Verwalten deiner Mediensammlung (Blurays, DVDs, Vinyl CDs und Tapes).
+FiMuVer ist eine Full-Stack-Anwendung zum Verwalten einer Mediensammlung (Blurays, DVDs, Vinyl, Tapes) mit Benutzerkonten, mehreren Sammlungen pro Nutzer, Invite-basierter Registrierung und TVDB-Anbindung für Film-/Serien-Metadaten.
 
 ## 🏗️ Projektstruktur
 
 ```
 FiMuVer/
 ├── backend/                   # Go API Backend
-│   ├── cmd/api/              # Einstiegspunkt
-│   │   └── main.go
+│   ├── cmd/api/               # Einstiegspunkt (main.go, Router-Setup)
 │   ├── internal/
-│   │   ├── config/           # YAML Konfiguration
-│   │   ├── db/               # Datenbankverbindung (GORM)
-│   │   ├── models/           # Datenmodelle
-│   │   ├── handlers/         # API Endpoints
-│   │   └── middleware/       # CORS, Auth, etc.
-│   ├── migrations/           # Datenbank Migrationen
-│   ├── go.mod               # Go Dependencies
-│   ├── config.yaml          # Datenbank Konfiguration
-│   └── Dockerfile           # Backend Container
-├── frontend/                 # React Vite Frontend
+│   │   ├── auth/               # JWT Erzeugung/Validierung
+│   │   ├── config/              # YAML + ENV Konfiguration
+│   │   ├── db/                  # DB-Verbindung, AutoMigration, Seeding
+│   │   ├── models/              # GORM Datenmodelle
+│   │   ├── handlers/            # HTTP Handler (Request/Response-DTOs)
+│   │   ├── services/            # Business-Logik / DB-Zugriff
+│   │   └── middleware/          # CORS, JWT-Auth
+│   ├── go.mod
+│   ├── config.yaml             # Server/DB/JWT/TVDB Konfiguration
+│   └── Dockerfile
+├── frontend/                  # React (Vite) Frontend
 │   ├── src/
-│   │   ├── components/      # Reusable UI Komponenten
-│   │   ├── pages/           # Seiten (Dashboard)
-│   │   ├── services/        # API Clients
-│   │   ├── hooks/           # Custom React Hooks
-│   │   ├── types/           # TypeScript/JS Types
+│   │   ├── components/          # Header, FilterBar, MediaCard/Form, InviteCodes, ...
+│   │   ├── pages/                # Landing, Auth, Admin, CollectionPage, ItemDetailPage
+│   │   ├── services/             # API Clients (apiClient, userapi, collection, editionapi, ...)
+│   │   ├── hooks/                 # Custom React Hooks
+│   │   ├── types/                 # Konstanten (Media-Typen etc.)
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── package.json
 │   └── vite.config.js
-├── docker-compose.yml       # Docker Orchestration
+├── docker-compose.yml          # Docker Orchestration
 └── README.md
 ```
 
@@ -60,8 +60,7 @@ cd backend
 # Installiere Go Dependencies
 go mod tidy
 
-# Starte PostgreSQL (z.B. lokal oder in separatem Container)
-# Stelle sicher, dass config.yaml korrekt konfiguriert ist
+# .env im Projekt-Root anlegen (siehe .env.example) und config.yaml prüfen
 
 # Starte den Server
 go run ./cmd/api/main.go
@@ -78,13 +77,13 @@ npm install
 npm run dev
 ```
 
-Der Frontend lädt dann unter `http://localhost:5173`
+Das Frontend läuft dann unter `http://localhost:5173`.
 
 ## 📋 Konfiguration
 
 ### Backend - config.yaml
 
-Die Datei `backend/config.yaml` definiert die Datenbank-Verbindung:
+Die Datei `backend/config.yaml` definiert Server-, Datenbank-, JWT- und TVDB-Einstellungen:
 
 ```yaml
 server:
@@ -98,89 +97,97 @@ database:
   password: "fimuver_password"
   database: "fimuver_db"
   sslmode: "disable"
+
+jwt:
+  secret: "changeme"
+  ttl: "24h"
+
+tvdb:
+  tvdb_api_key: ""
+  base_url: "https://api4.thetvdb.com/v4"
 ```
 
-**Bei Docker Compose:** Die `config.yaml` wird automatisch mit den Docker-Umgebungsvariablen gefüllt.
+Alle Werte können per Umgebungsvariable überschrieben werden: `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME`, `JWT_SECRET`, `JWT_TTL`, `TVDB_API_KEY`, `TVDB_BASE_URL`. Diese werden zusätzlich aus einer `.env`-Datei im Projekt-Root geladen (`godotenv`).
 
-**Für lokale Entwicklung:** Stelle sicher, dass PostgreSQL läuft und die Credentials korrekt sind.
+**Bei Docker Compose:** `config.yaml` wird automatisch mit den Docker-Umgebungsvariablen gefüllt.
 
 ## 🗄️ Datenbank
 
-### Schema
+PostgreSQL, verwaltet per GORM AutoMigration (Tabellen werden beim Start automatisch erstellt/aktualisiert). Details zum Schema siehe [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md).
 
-**Media Tabelle:**
-- `id` (Primary Key)
-- `title` - Titel des Mediums
-- `description` - Beschreibung
-- `media_type` - bluray, dvd, vinyl oder tape
-- `artist` - Künstler (für Musik)
-- `director` - Regisseur (für Filme)
-- `year` - Erscheinungsjahr
-- `genre` - Genre
-- `condition` - Zustand (mint, good, fair, poor)
-- `location` - Lagerort
-- `notes` - JSON Feld für zusätzliche Metadaten
-- `created_at`, `updated_at` - Zeitstempel
-
-Die Tabelle wird automatisch bei der ersten Verbindung erstellt (GORM AutoMigration).
+Kurzüberblick der wichtigsten Tabellen:
+- **users** – Benutzerkonten (Email, Username, bcrypt-Passwort-Hash, `is_admin`)
+- **collections** – Sammlungen eines Users (z. B. "Meine Blurays")
+- **items** – Medieneinträge innerhalb einer Collection (Titel, Typ, Jahr, Genre, Zustand, Lagerort, optionale TVDB-ID/Cover)
+- **invite_codes** – Einladungscodes für die Registrierung (mit Nutzungslimit/Ablaufdatum)
+- **settings** – globale Boolean-Settings (z. B. `enable_registration`)
+- **movies, persons, genres, editions, labels, media_types, conditions, movie_actors, movie_genres, collection_items** – normalisiertes Metadaten-Schema für Filme/Editionen; aktuell teilweise vorbereitet, aber noch nicht vollständig über die API verdrahtet (nur `editions` hat einen Read-Endpoint)
 
 ## 🔌 API Endpoints
 
-### Media Management
+Basis-URL: `http://localhost:8080/api/v1`. Endpunkte außer Registrierung/Login erfordern einen `Authorization: Bearer <token>` Header (JWT).
 
-**Alle Medien abrufen (optional gefiltert):**
+### Auth / User
 ```
-GET /api/v1/media?type=bluray
-```
-
-**Ein Medium abrufen:**
-```
-GET /api/v1/media/:id
+POST /users            Registrierung (alias: POST /users/register)
+POST /users/login      Login → { token, id, username, email, is_admin }
+GET  /users/:id        Benutzer per ID abrufen (auth erforderlich)
 ```
 
-**Medium erstellen:**
+### Collections
 ```
-POST /api/v1/media
-Content-Type: application/json
-
-{
-  "title": "The Matrix",
-  "media_type": "bluray",
-  "director": "Wachowski",
-  "year": 1999,
-  "genre": "Science Fiction",
-  "condition": "good",
-  "location": "Regal 1"
-}
+GET    /collections              Alle Collections des eingeloggten Users
+POST   /collections               Neue Collection anlegen
+GET    /collections/:id           Eine Collection abrufen (nur eigene)
+PUT    /collections/:id           Collection aktualisieren (nur eigene)
+DELETE /collections/:id           Collection löschen (nur eigene)
 ```
 
-**Medium aktualisieren:**
+### Items (innerhalb einer Collection)
 ```
-PUT /api/v1/media/:id
-```
-
-**Medium löschen:**
-```
-DELETE /api/v1/media/:id
+POST   /collections/:id/items             Item zur Collection hinzufügen (nur eigene Collection)
+DELETE /collections/:id/items/:itemId     Item löschen (nur aus eigener Collection)
 ```
 
-**Nach Medien suchen:**
+### Invite Codes
 ```
-GET /api/v1/search?q=Matrix
+POST   /invite/generate   Neuen Invite-Code erzeugen
+GET    /invite/list        Alle Invite-Codes auflisten
+DELETE /invite/:id          Invite-Code löschen
 ```
 
-**Health Check:**
+### Settings
 ```
-GET /health
+GET    /settings           Alle Settings
+GET    /settings/:name      Ein Setting nach Name
+PUT    /settings/:name      Setting aktualisieren
+DELETE /settings/:id         Setting löschen
+```
+
+### TVDB (Metadaten-Suche)
+```
+GET /tvdb/search/series?q=...
+GET /tvdb/search/movies?q=...
+```
+
+### Editionen
+```
+GET /editions               Alle Editionen (z. B. Steelbook, Limited, Standard)
+```
+
+### Sonstiges
+```
+GET /health                 Health Check
 ```
 
 ## 🎨 Frontend Features
 
-- **Dashboard:** Übersicht aller Medien
-- **Filter:** Nach Medientyp filtern
-- **Suche:** Nach Titel, Künstler oder Regisseur suchen
-- **Formular:** Neue Medien hinzufügen oder bearbeiten
-- **CRUD:** Vollständiges Löschen, Bearbeiten, Anzeigen
+- **Landing-Seite:** Übersicht der eigenen Collections
+- **Auth:** Login/Registrierung, optional mit Invite-Code
+- **Collections:** Anlegen, Umbenennen, Löschen; einzelne Items hinzufügen/löschen
+- **Item-Detailseite:** Detailansicht eines Medieneintrags
+- **Admin-Panel:** (nur für `is_admin`-User) Verwaltung von Invite-Codes und Settings
+- **TVDB-Suche:** Anbindung zur Metadaten-Suche für Filme/Serien
 - **Responsive Design:** Funktioniert auf Desktop und Mobile
 
 ## 🛠️ Entwicklung
@@ -189,10 +196,6 @@ GET /health
 
 ```bash
 cd backend
-
-# Dependencies installieren
-go get github.com/gin-gonic/gin
-go get github.com/gorm.io/gorm
 
 # Server mit Hot Reload starten (mit Air)
 go install github.com/cosmtrek/air@latest
@@ -207,17 +210,10 @@ go test ./...
 ```bash
 cd frontend
 
-# Dependencies installieren
-npm install
-
-# Dev Server mit Hot Module Replacement
-npm run dev
-
-# Production Build
-npm run build
-
-# Preview Production Build
-npm run preview
+npm run dev        # Dev Server mit HMR
+npm run build       # Production Build
+npm run preview      # Preview Production Build
+npm run lint          # ESLint
 ```
 
 ## 🐳 Docker Kommandos
@@ -245,33 +241,40 @@ docker-compose exec postgres psql -U fimuver_user -d fimuver_db
 
 ### Backend (Go)
 - **gin** - HTTP Framework
-- **gorm** - ORM für Datenbankoperationen
-- **gorm/driver/postgres** - PostgreSQL Driver
-- **yaml** - YAML Parsing
+- **gorm** + **gorm/driver/postgres** - ORM & PostgreSQL Driver
+- **golang-jwt** - JWT Erzeugung/Validierung
+- **golang.org/x/crypto/bcrypt** - Passwort-Hashing
+- **joho/godotenv** - `.env`-Support
+- **gopkg.in/yaml.v2** - YAML Parsing
 
 ### Frontend (React)
-- **react** - UI Framework
+- **react** / **react-dom** (v19)
+- **react-icons**
 - **vite** - Build Tool
 
-## 🔐 Sicherheit (Roadmap)
+## 🔐 Sicherheit — aktueller Stand & offene Punkte
 
-Folgende Funktionen sollten später implementiert werden:
-- [ ] JWT Authentication
-- [ ] Input Validation
-- [ ] Rate Limiting
-- [ ] Encryption für sensitive Daten
-- [ ] CORS Konfiguration
-- [ ] Environment Variables Management
+Bereits umgesetzt:
+- [x] JWT Authentication + bcrypt Passwort-Hashing
+- [x] Ownership-Checks bei Collections/Items (nur eigene Daten abrufbar/änderbar)
+- [x] CORS Middleware
+- [x] Invite-Code-gesteuerte Registrierung
+
+Noch offen / Roadmap:
+- [ ] Rate Limiting (v. a. Login/Registrierung)
+- [ ] Umfassendere Input-Validierung
+- [ ] Tests für Handler/Services (aktuell nur CORS-Middleware getestet)
+- [ ] Verschlüsselung sensibler Zusatzdaten
 
 ## 📝 Nächste Schritte
 
-1. **Authentifizierung:** JWT oder Session-basierte Auth implementieren
-2. **Persistierung:** Lokales Frontend Caching mit localStorage/IndexedDB
-3. **Export:** PDF/CSV Export der Mediensammlung
-4. **Statistiken:** Dashboard mit Statistiken (Medienanzahl, Genre-Verteilung, etc.)
-5. **Uploads:** Bilder/Cover hochladen
-6. **Tests:** Unit und Integration Tests
-7. **Deployment:** Docker Hub, Kubernetes, etc.
+1. **Normalisiertes Metadaten-Schema fertig verdrahten:** Movie/Person/Genre/CollectionItem stehen als Models bereit, aber nur `editions` ist über die API erreichbar
+2. **Item-Update-Endpoint:** Aktuell nur Erstellen/Löschen, kein `PUT` für Items
+3. **Pagination:** Für Collections/Items bei großen Sammlungen
+4. **Export:** PDF/CSV Export der Mediensammlung
+5. **Statistiken:** Dashboard mit Statistiken (Medienanzahl, Genre-Verteilung, etc.)
+6. **Cover-Upload:** Direkter Bild-Upload statt nur `image_url`-Feld
+7. **Tests:** Unit- und Integrationstests für Backend und Frontend
 
 ## 📄 Lizenz
 

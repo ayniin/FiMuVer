@@ -26,6 +26,7 @@ const (
 	msgItemNotFound  = "item not found"
 	msgTitleRequired = "title is required"
 	msgCreateItem    = "could not create item"
+	msgUpdateItem    = "could not update item"
 	msgDeleteItem    = "could not delete item"
 
 	// User
@@ -67,6 +68,7 @@ const (
 	msgCollectionDeleted = "collection deleted"
 	msgItemDeleted       = "item deleted"
 	msgItemCreated       = "item created"
+	msgItemUpdated       = "item updated"
 	msgInviteCreated     = "invite code created"
 	msgInviteDeleted     = "invite code deleted"
 	msgSettingCreated    = "setting created"

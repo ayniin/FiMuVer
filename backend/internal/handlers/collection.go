@@ -127,9 +127,11 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
 	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		unauthorized(c)
+		badRequest(c, msgInvalidCollectionID)
 		return
 	}
+
+	userID := c.GetUint("user_id")
 
 	svc := services.NewCollectionService(h.db)
 	col, err := svc.GetCollectionByID(uint(id64))
@@ -137,6 +139,12 @@ func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
 		notFound(c, msgCollectionNotFound)
 		return
 	}
+
+	if col.UserID != userID {
+		forbidden(c)
+		return
+	}
+
 	ok(c, newCollectionResponse(*col))
 }
 
@@ -159,7 +167,7 @@ func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
 }
 
 func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
-	collections := make([]CollectionResponse, len(c))
+	collections := make([]CollectionResponse, 0, len(c))
 	for _, col := range c {
 		collections = append(collections, CollectionResponse{
 			ID:          col.ID,
