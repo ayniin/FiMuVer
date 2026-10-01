@@ -53,6 +53,12 @@ const (
 	// TVDB
 	msgTVDBUnavailable = "tvdb request failed"
 
+	// TMDB
+	msgTMDBUnavailable = "tmdb request failed"
+
+	// Discogs
+	msgDiscogsUnavailable = "discogs request failed"
+
 	// Settings
 	msgInvalidSettingID = "invalid setting id"
 	msgSettingNameReq   = "setting name is required"

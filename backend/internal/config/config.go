@@ -22,6 +22,18 @@ type TVDBConfig struct {
 	BaseURL    string `yaml:"base_url"`
 }
 
+type TMBDConfig struct {
+	TmdbApiKey   string `yaml:"tmdb_api_key"`
+	BaseURL      string `yaml:"base_url"`
+	ImageBaseURL string `yaml:"image_base_url"`
+}
+
+type DiscogsConfig struct {
+	Token     string `yaml:"discogs_token"`
+	BaseURL   string `yaml:"base_url"`
+	UserAgent string `yaml:"user_agent"`
+}
+
 type ServerConfig struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
@@ -36,6 +48,8 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	TVDB     TVDBConfig     `yaml:"tvdb"`
+	TMDB     TMBDConfig     `yaml:"tmdb"`
+	Discogs  DiscogsConfig  `yaml:"discogs"`
 	JWT      JWTConfig      `yaml:"jwt"`
 }
 
@@ -98,6 +112,35 @@ func LoadConfig(filepath string) (*Config, error) {
 
 	if cfg.TVDB.BaseURL == "" {
 		cfg.TVDB.BaseURL = "https://api4.thetvdb.com/v4"
+	}
+
+	if tmdbApiKey := os.Getenv("TMDB_API_KEY"); tmdbApiKey != "" {
+		cfg.TMDB.TmdbApiKey = tmdbApiKey
+	}
+	if tmdbBaseURL := os.Getenv("TMDB_BASE_URL"); tmdbBaseURL != "" {
+		cfg.TMDB.BaseURL = tmdbBaseURL
+	}
+
+	if cfg.TMDB.BaseURL == "" {
+		cfg.TMDB.BaseURL = "https://api.themoviedb.org/3"
+	}
+
+	if cfg.TMDB.ImageBaseURL == "" {
+		cfg.TMDB.ImageBaseURL = "https://image.tmdb.org/t/p/w500"
+	}
+
+	if discogsToken := os.Getenv("DISCOGS_API_TOKEN"); discogsToken != "" {
+		cfg.Discogs.Token = discogsToken
+	}
+	if discogsBaseURL := os.Getenv("DISCOGS_BASE_URL"); discogsBaseURL != "" {
+		cfg.Discogs.BaseURL = discogsBaseURL
+	}
+
+	if cfg.Discogs.BaseURL == "" {
+		cfg.Discogs.BaseURL = "https://api.discogs.com"
+	}
+	if cfg.Discogs.UserAgent == "" {
+		cfg.Discogs.UserAgent = "FiMuVer/1.0"
 	}
 
 	return &cfg, nil

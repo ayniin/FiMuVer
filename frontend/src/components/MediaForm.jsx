@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MEDIA_TYPES, MEDIA_TYPE_LABELS, CONDITIONS, CONDITION_LABELS, Media } from '../types';
 import TVDBAPI from '../services/tvdb';
+import TMDBAPI from '../services/tmdb';
 import './MediaForm.css';
 
 export default function MediaForm({ media = null, onSubmit, onCancel }) {
@@ -9,11 +10,12 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
   );
 
 
-  const [tvdbType, setTvdbType] = useState('movie'); // 'movie' | 'series'
-  const [tvdbQuery, setTvdbQuery] = useState('');
-  const [tvdbResults, setTvdbResults] = useState([]);
-  const [tvdbLoading, setTvdbLoading] = useState(false);
-  const [tvdbError, setTvdbError] = useState('');
+  const [searchType, setSearchType] = useState('movie'); // 'movie' | 'series'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSource, setActiveSource] = useState('tmdb'); // 'tmdb' | 'tvdb'
+  const [results, setResults] = useState({ tmdb: [], tvdb: [] });
+  const [errors, setErrors] = useState({ tmdb: '', tvdb: '' });
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     if (media) {
@@ -29,35 +31,47 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
     });
   };
 
-  const handleTvdbSearch = async (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    if (!tvdbQuery.trim()) return;
-    
-    setTvdbLoading(true);
-    setTvdbError('');
-    setTvdbResults([]);
+    if (!searchQuery.trim()) return;
 
-    try{
-      const results = tvdbType === 'series' ? await TVDBAPI.searchSeries(tvdbQuery) : await TVDBAPI.searchMovies(tvdbQuery);
-      setTvdbResults(results);
-    } catch(error) {
-      setTvdbError(error.message || 'Fehler bei der Suche');
-    }finally {
-      setTvdbLoading(false);
-    }
+    setSearchLoading(true);
+    setErrors({ tmdb: '', tvdb: '' });
+    setResults({ tmdb: [], tvdb: [] });
+
+    const fetchTmdb = searchType === 'series'
+      ? TMDBAPI.searchSeries(searchQuery)
+      : TMDBAPI.searchMovies(searchQuery);
+    const fetchTvdb = searchType === 'series'
+      ? TVDBAPI.searchSeries(searchQuery)
+      : TVDBAPI.searchMovies(searchQuery);
+
+    const [tmdbResult, tvdbResult] = await Promise.allSettled([fetchTmdb, fetchTvdb]);
+
+    setResults({
+      tmdb: tmdbResult.status === 'fulfilled' ? tmdbResult.value : [],
+      tvdb: tvdbResult.status === 'fulfilled' ? tvdbResult.value : [],
+    });
+    setErrors({
+      tmdb: tmdbResult.status === 'rejected' ? (tmdbResult.reason.message || 'Fehler bei TMDB-Suche') : '',
+      tvdb: tvdbResult.status === 'rejected' ? (tvdbResult.reason.message || 'Fehler bei TVDB-Suche') : '',
+    });
+
+    setSearchLoading(false);
   };
 
-  const handleTvdbSelect = (result) => {
+  const handleResultSelect = (result, source) => {
     setFormData({
       ...formData,
       title: result.name || formData.title,
       description: result.overview || formData.description,
       year: result.year || formData.year,
-      image_url: result.imageUrl || formData.image_url,
-      tvdb_id: result.tvdbId || formData.tvdb_id,
+      image_url: result.image_url || formData.image_url,
+      tmdb_id: source === 'tmdb' ? result.id : formData.tmdb_id,
+      tvdb_id: source === 'tvdb' ? result.tvdb_id : formData.tvdb_id,
     });
-    setTvdbResults([]);
-    setTvdbQuery('');
+    setResults({ tmdb: [], tvdb: [] });
+    setSearchQuery('');
   };
 
   const handleSubmit = (e) => {
@@ -73,36 +87,55 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
 
      return (
       <form className="media-form" onSubmit={handleSubmit}>
-        <div className="tvdb-search-block">
-          <label>TVDB-Suche (optional)</label>
-          <div className="tvdb-search-row">
-            <select value={tvdbType} onChange={(e) => setTvdbType(e.target.value)}>
+        <div className="media-search-block">
+          <label>Online-Suche (optional)</label>
+          <div className="media-search-row">
+            <select value={searchType} onChange={(e) => setSearchType(e.target.value)}>
               <option value="movie">Film</option>
               <option value="series">Serie</option>
             </select>
             <input
               type="text"
-              value={tvdbQuery}
-              onChange={(e) => setTvdbQuery(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Titel suchen..."
             />
-            <button type="button" onClick={handleTvdbSearch} disabled={tvdbLoading}>
-              {tvdbLoading ? 'Suche...' : 'Suchen'}
+            <button type="button" onClick={handleSearch} disabled={searchLoading}>
+              {searchLoading ? 'Suche...' : 'Suchen'}
             </button>
           </div>
 
-          {tvdbError && <div className="error-message">{tvdbError}</div>}
+          {(results.tmdb.length > 0 || results.tvdb.length > 0) && (
+            <div className="media-search-tabs">
+              <button
+                type="button"
+                className={activeSource === 'tmdb' ? 'active' : ''}
+                onClick={() => setActiveSource('tmdb')}
+              >
+                TMDB ({results.tmdb.length})
+              </button>
+              <button
+                type="button"
+                className={activeSource === 'tvdb' ? 'active' : ''}
+                onClick={() => setActiveSource('tvdb')}
+              >
+                TVDB ({results.tvdb.length})
+              </button>
+            </div>
+          )}
 
-          {tvdbResults.length > 0 && (
-            <div className="tvdb-results">
-              {tvdbResults.map((r) => (
+          {errors[activeSource] && <div className="error-message">{errors[activeSource]}</div>}
+
+          {results[activeSource].length > 0 && (
+            <div className="media-search-results">
+              {results[activeSource].map((r) => (
                 <div
-                  key={r.tvdbId}
-                  className="tvdb-result-item"
-                  onClick={() => handleTvdbSelect(r)}
+                  key={`${activeSource}-${r.id || r.tvdb_id}`}
+                  className="media-search-result-item"
+                  onClick={() => handleResultSelect(r, activeSource)}
                 >
-                  {r.imageUrl && <img src={r.imageUrl} alt={r.name} />}
-                  <div className="tvdb-result-info">
+                  {r.image_url && <img src={r.image_url} alt={r.name} />}
+                  <div className="media-search-result-info">
                     <strong>{r.name}</strong> {r.year ? `(${r.year})` : ''}
                     {r.overview && <p>{r.overview.slice(0, 120)}{r.overview.length > 120 ? '…' : ''}</p>}
                   </div>

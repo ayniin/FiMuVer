@@ -170,7 +170,8 @@ func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
 	collections := make([]CollectionResponse, 0, len(c))
 	for _, col := range c {
 		collections = append(collections, CollectionResponse{
-			ID:          col.ID,
+			ID: col.ID,
+
 			UserID:      col.UserID,
 			Name:        col.Name,
 			Description: col.Description,
