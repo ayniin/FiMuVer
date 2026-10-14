@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut, apiDelete } from './apiClient';
+import { apiGet } from './apiClient';
 
 
 class EditionAPI {

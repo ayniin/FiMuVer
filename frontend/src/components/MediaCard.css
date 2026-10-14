@@ -1,81 +1,109 @@
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.media-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.media-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Gesamte Karte klickbar über den Titel-Link, Löschen-Button liegt darüber */
 .media-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .media-card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
 }
 
-.media-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 8px;
+.media-card:has(.media-card-link:focus-visible) {
+  box-shadow: var(--focus-ring);
 }
 
-.media-card-header h3 {
-  margin: 0;
-  color: #333;
-}
-
-.media-type-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background-color: #007bff;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
+.media-card-cover {
+  aspect-ratio: 2 / 3;
 }
 
 .media-card-body {
-  margin-bottom: 12px;
-  color: #666;
-}
-
-.media-card-body p {
-  margin: 6px 0;
-}
-
-.media-card-footer {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.85rem 0.9rem 1rem;
 }
 
-.btn-edit, .btn-delete {
-  flex: 1;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
+.media-card-body h3 {
+  font-size: 0.98rem;
+  word-break: break-word;
 }
 
-.btn-edit {
-  background-color: #28a745;
-  color: white;
+.media-card-link {
+  color: inherit;
+  text-decoration: none;
 }
 
-.btn-edit:hover {
-  background-color: #218838;
+.media-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
 }
 
-.btn-delete {
-  background-color: #dc3545;
-  color: white;
+.media-card-link:focus-visible {
+  box-shadow: none;
 }
 
-.btn-delete:hover {
-  background-color: #c82333;
+.media-card-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
+.media-card-delete {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  background: rgba(20, 21, 27, 0.6);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.media-card:hover .media-card-delete,
+.media-card-delete:focus-visible {
+  opacity: 1;
+}
+
+.media-card-delete:hover {
+  background: var(--danger);
+}
+
+/* Touch-Geräte ohne Hover: Button immer sichtbar */
+@media (hover: none) {
+  .media-card-delete {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .media-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+  }
+}

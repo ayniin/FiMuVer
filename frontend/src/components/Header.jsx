@@ -1,34 +1,27 @@
 import React from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { FiLogOut } from 'react-icons/fi';
 import './Header.css';
 
-const Header = ({ user, onLogout, onNavigateToAdmin }) => {
-  const handleAdminClick = () => {
-    if (onNavigateToAdmin) {
-      onNavigateToAdmin();
-    }
-  };
-  
-  return (
-    <header className="landing-header">
-      <div className="header-content">
-        <h1>FiMuVer</h1>
-        <div className="header-buttons">
-          {user?.is_admin && onNavigateToAdmin && (
-            <button 
-              onClick={handleAdminClick}
-              className="admin-btn"
-              aria-label="Admin-Panel öffnen"
-            >
-              Admin 
-            </button>
-          )}
-          <button onClick={onLogout} className="logout-btn" aria-label="Abmelden">
-            Logout
-          </button>
-        </div>
+const Header = ({ user, onLogout }) => (
+  <header className="app-header">
+    <div className="app-header-inner">
+      <Link to="/" className="app-brand">FiMuVer</Link>
+
+      <nav className="app-nav" aria-label="Hauptnavigation">
+        <NavLink to="/" end>Sammlungen</NavLink>
+        {user?.is_admin && <NavLink to="/admin">Admin</NavLink>}
+      </nav>
+
+      <div className="app-user">
+        {user?.username && <span className="app-username">{user.username}</span>}
+        <button type="button" onClick={onLogout} className="app-logout">
+          <FiLogOut size={16} />
+          <span>Abmelden</span>
+        </button>
       </div>
-    </header>
-  );
-};
+    </div>
+  </header>
+);
 
 export default Header;

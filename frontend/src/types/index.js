@@ -7,11 +7,15 @@ export const MEDIA_TYPES = {
 };
 
 export const MEDIA_TYPE_LABELS = {
-  bluray: 'Bluray',
+  bluray: 'Blu-ray',
   dvd: 'DVD',
   vinyl: 'Vinyl',
   tape: 'Tape'
 };
+
+// Musik-Medien: Künstler statt Regisseur, Online-Suche über Discogs
+export const MUSIC_MEDIA_TYPES = [MEDIA_TYPES.VINYL, MEDIA_TYPES.TAPE];
+export const isMusicType = (type) => MUSIC_MEDIA_TYPES.includes(type);
 
 export const CONDITIONS = {
   MINT: 'mint',

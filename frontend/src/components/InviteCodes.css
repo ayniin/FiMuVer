@@ -1,108 +1,66 @@
-.invite-codes {
-    background: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+.invite-intro {
+    color: var(--text-muted);
 }
 
-.invite-codes-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.invite-codes-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: #333;
-}
-
-.invite-generate-btn {
-    width: auto;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    background-color: #28a745;
-}
-
-.invite-generate-btn:hover:not(:disabled) {
-    background-color: #1e7e34;
-}
-
-.invite-error {
-    color: red;
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-}
-
-.invite-loading,
-.invite-empty {
-    color: #888;
-    font-size: 0.9rem;
-    text-align: center;
-    padding: 1rem 0;
+.invite-table-wrap {
+    position: relative; /* hält .visually-hidden im Scroll-Container */
+    overflow-x: auto;
 }
 
 .invite-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
 }
 
 .invite-table th {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     text-align: left;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid #eee;
-    color: #555;
-    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }
 
 .invite-table td {
-    padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
 }
 
-.invite-table tr.invite-used td {
-    color: #aaa;
+.invite-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
-.invite-code-text {
-    font-family: monospace;
-    font-size: 1rem;
-    letter-spacing: 0.1em;
-    margin-right: 0.5rem;
+.invite-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
-.invite-copy-btn {
-    width: auto;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.85rem;
-    background: #f0f0f0;
-    color: #555;
+.invite-code code {
+    padding: 0.2rem 0.5rem;
     border-radius: 4px;
+    background: var(--surface-2);
+    font-family: ui-monospace, Consolas, monospace;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-strong);
 }
 
-.invite-copy-btn:hover:not(:disabled) {
-    background: #e0e0e0;
+.invite-used {
+    opacity: 0.55;
 }
 
-.invite-delete-btn {
-    width: auto;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.8rem;
-    background: #dc3545;
-}
-
-.invite-delete-btn:hover:not(:disabled) {
-    background: #a71d2a;
+.invite-actions {
+    text-align: right;
 }
 
 @media (max-width: 600px) {
-    .invite-table th:nth-child(3),
-    .invite-table td:nth-child(3),
-    .invite-table th:nth-child(4),
-    .invite-table td:nth-child(4) {
-        display: none;
+    .invite-codes .panel-head {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

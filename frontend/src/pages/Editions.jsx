@@ -7,40 +7,35 @@ const Editions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => { loadEditions(); }, []);
+  useEffect(() => {
+    const loadEditions = async () => {
+      try {
+        const data = await EditionAPI.getAllEditions();
+        setEditions(data || []);
+      } catch (err) {
+        setError(err.message || 'Die Editionen konnten nicht geladen werden.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEditions();
+  }, []);
 
-  const loadEditions = async () => {
-    try {
-      setLoading(true);
-      const data = await EditionAPI.getAllEditions();
-      setEditions(data || []);
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Fehler beim Laden der Editionen');
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) return <div className="skeleton admin-skeleton" aria-busy="true" aria-label="Wird geladen" />;
+  if (error) return <div className="alert alert--error" role="alert">{error}</div>;
+  if (editions.length === 0) return <p className="empty-state">Keine Editionen vorhanden.</p>;
 
   return (
-    <div className="settings-section">
-      <h2>Editionen</h2>
-      {loading && <div className="loading">Wird geladen...</div>}
-      {error && <div className="error-message">{error}</div>}
-      {!loading && editions.length === 0 && <div className="empty-state"><p>Keine Editionen vorhanden</p></div>}
-      {!loading && editions.length > 0 && (
-        <div className="settings-list">
-          {editions.map(e => (
-            <div key={e.id} className="settings-item">
-              <div className="setting-info">
-                <div className="setting-name">{e.title || e.name}</div>
-                <div className="setting-value">{e.description || ''}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <ul className="admin-list">
+      {editions.map((e) => (
+        <li key={e.id} className="admin-list-item">
+          <div>
+            <span className="admin-list-name">{e.title || e.name}</span>
+            {e.description && <span className="admin-list-meta">{e.description}</span>}
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 };
 

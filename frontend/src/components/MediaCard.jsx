@@ -1,30 +1,34 @@
 import React from 'react';
-import { MEDIA_TYPE_LABELS, CONDITION_LABELS } from '../types';
+import { Link } from 'react-router-dom';
+import { FiTrash2 } from 'react-icons/fi';
+import { MEDIA_TYPE_LABELS } from '../types';
+import MediaCover from './MediaCover';
 import './MediaCard.css';
 
-export default function MediaCard({ media, onEdit, onDelete }) {
+export default function MediaCard({ media, to, onDelete }) {
+  const creator = media.artist || media.director;
+  const meta = [creator, media.year || null].filter(Boolean).join(' · ');
+
   return (
-    <div className="media-card">
-      <div className="media-card-header">
-        <h3>{media.title}</h3>
-        <span className="media-type-badge">{MEDIA_TYPE_LABELS[media.media_type]}</span>
-      </div>
+    <article className="card media-card">
+      <MediaCover media={media} className="media-card-cover" />
 
       <div className="media-card-body">
-        {media.artist && <p><strong>Künstler:</strong> {media.artist}</p>}
-        {media.director && <p><strong>Regisseur:</strong> {media.director}</p>}
-        {media.year && <p><strong>Jahr:</strong> {media.year}</p>}
-        {media.genre && <p><strong>Genre:</strong> {media.genre}</p>}
-        {media.condition && <p><strong>Zustand:</strong> {CONDITION_LABELS[media.condition]}</p>}
-        {media.location && <p><strong>Lagerort:</strong> {media.location}</p>}
-        {media.description && <p><strong>Beschreibung:</strong> {media.description}</p>}
+        {media.media_type && <span className="badge">{MEDIA_TYPE_LABELS[media.media_type]}</span>}
+        <h3>
+          <Link to={to} className="media-card-link">{media.title}</Link>
+        </h3>
+        {meta && <p className="media-card-meta">{meta}</p>}
       </div>
 
-      <div className="media-card-footer">
-        <button className="btn-edit" onClick={() => onEdit(media)}>Bearbeiten</button>
-        <button className="btn-delete" onClick={() => onDelete(media.id)}>Löschen</button>
-      </div>
-    </div>
+      <button
+        className="btn btn--icon media-card-delete"
+        onClick={onDelete}
+        aria-label={`„${media.title}" löschen`}
+        title="Löschen"
+      >
+        <FiTrash2 size={16} />
+      </button>
+    </article>
   );
 }
-
