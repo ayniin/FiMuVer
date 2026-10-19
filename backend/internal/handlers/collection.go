@@ -22,12 +22,13 @@ type CollectionRequest struct {
 }
 
 type CollectionResponse struct {
-	ID          uint      `json:"id"`
-	UserID      uint      `json:"user_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint           `json:"id"`
+	UserID      uint           `json:"user_id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Items       []ItemResponse `json:"items,omitempty"`
 }
 
 func NewCollectionHandler(db *db.Database) *CollectionHandler {
@@ -167,7 +168,7 @@ func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
 }
 
 func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
-	collections := make([]CollectionResponse, len(c))
+	collections := make([]CollectionResponse, 0, len(c))
 	for _, col := range c {
 		collections = append(collections, CollectionResponse{
 			ID:          col.ID,
@@ -176,6 +177,7 @@ func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
 			Description: col.Description,
 			CreatedAt:   col.CreatedAt,
 			UpdatedAt:   col.UpdatedAt,
+			Items:       newItemArrayResponse(col.Items),
 		})
 	}
 	return collections
@@ -189,5 +191,14 @@ func newCollectionResponse(c models.Collection) CollectionResponse {
 		Description: c.Description,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
+		Items:       newItemArrayResponse(c.Items),
 	}
+}
+
+func newItemArrayResponse(items []models.Item) []ItemResponse {
+	responses := make([]ItemResponse, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, newItemResponse(item))
+	}
+	return responses
 }
