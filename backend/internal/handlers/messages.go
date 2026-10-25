@@ -27,6 +27,7 @@ const (
 	msgTitleRequired = "title is required"
 	msgCreateItem    = "could not create item"
 	msgDeleteItem    = "could not delete item"
+	msgUpdateItem    = "could not update item"
 
 	// User
 	msgInvalidUserID      = "invalid user id"
@@ -51,6 +52,7 @@ const (
 
 	// TVDB
 	msgTVDBUnavailable = "tvdb request failed"
+	msgTMDBUnavailable = "tmdb request failed"
 
 	// Settings
 	msgInvalidSettingID = "invalid setting id"
@@ -67,6 +69,7 @@ const (
 	msgCollectionDeleted = "collection deleted"
 	msgItemDeleted       = "item deleted"
 	msgItemCreated       = "item created"
+	msgItemUpdated       = "item updated"
 	msgInviteCreated     = "invite code created"
 	msgInviteDeleted     = "invite code deleted"
 	msgSettingCreated    = "setting created"

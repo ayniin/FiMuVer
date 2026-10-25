@@ -17,7 +17,9 @@ type Item struct {
 	Condition    string    `json:"condition"`
 	Location     string    `json:"location"`
 	Notes        string    `json:"notes"`
+	Edition      string    `json:"edition"`
 	TVDBID       string    `json:"tvdb_id"`
+	ImdbID       string    `gorm:"index" json:"imdb_id"`
 	ImageURL     string    `json:"image_url"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

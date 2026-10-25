@@ -34,7 +34,7 @@ type tvdbSearchResultStruct struct {
 	Overview string `json:"overview"`
 	Year     int    `json:"year"`
 	ImageURL string `json:"image_url"`
-	Type     string `json:"type"` //series / movie
+	Type     string `json:"type"`
 }
 
 // UnmarshalJSON überschreibt das Standard-Unmarshalling, weil TVDB "year"
@@ -170,16 +170,6 @@ func (c *TVDBClient) get(path, token string) (*http.Response, error) {
 func (c *TVDBClient) SearchSeries(query string) ([]tvdbSearchResultStruct, error) {
 	var resp tvdbSearchResponse
 	path := fmt.Sprintf("/search?query=%s&type=series", url.QueryEscape(query))
-	if err := c.doRequest(path, &resp); err != nil {
-		return nil, err
-	}
-
-	return resp.Data, nil
-}
-
-func (c *TVDBClient) SearchMovies(query string) ([]tvdbSearchResultStruct, error) {
-	var resp tvdbSearchResponse
-	path := fmt.Sprintf("/search?query=%s&type=movie", url.QueryEscape(query))
 	if err := c.doRequest(path, &resp); err != nil {
 		return nil, err
 	}

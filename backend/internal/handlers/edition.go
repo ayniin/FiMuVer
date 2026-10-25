@@ -33,7 +33,7 @@ func (h *EditionHandler) GetAllEditions(c *gin.Context) {
 }
 
 func newEditionResponse(c []models.Edition) []EditionResponse {
-	editions := make([]EditionResponse, len(c))
+	editions := make([]EditionResponse, 0, len(c))
 	for _, col := range c {
 		editions = append(editions, EditionResponse{
 			ID:   col.ID,

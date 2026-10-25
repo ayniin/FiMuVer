@@ -1,3 +1,5 @@
+import { apiPost, apiPut, apiDelete } from './apiClient';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 // Helper-Funktion für headers mit token
@@ -129,20 +131,17 @@ class MediaAPI {
 
 
 export const addItemToCollection = async (collectionId, itemData) => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const headers = { 'Content-Type': 'application/json' };
-  if (user?.token) headers['Authorization'] = `Bearer ${user.token}`;
-
-  const response = await fetch(`${API_BASE_URL}/collections/${collectionId}/items`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(itemData),
-  });
-
-  if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-  const data = await response.json();
-  return data.data;
+  const response = await apiPost(`/collections/${collectionId}/items`, itemData);
+  return response?.data;
 };
+
+export const updateItem = async (collectionId, itemId, itemData) => {
+  const response = await apiPut(`/collections/${collectionId}/items/${itemId}`, itemData);
+  return response?.data;
+};
+
+export const deleteItem = (collectionId, itemId) =>
+  apiDelete(`/collections/${collectionId}/items/${itemId}`);
 
 export const logout = () => {
   localStorage.removeItem('user');

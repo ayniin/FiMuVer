@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MEDIA_TYPES, MEDIA_TYPE_LABELS, CONDITIONS, CONDITION_LABELS, Media } from '../types';
 import TVDBAPI from '../services/tvdb';
+import EditionAPI from '../services/editionapi';
 import './MediaForm.css';
 
 export default function MediaForm({ media = null, onSubmit, onCancel }) {
@@ -14,12 +15,11 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
   const [tvdbResults, setTvdbResults] = useState([]);
   const [tvdbLoading, setTvdbLoading] = useState(false);
   const [tvdbError, setTvdbError] = useState('');
+  const [editions, setEditions] = useState([]);
 
   useEffect(() => {
-    if (media) {
-      setFormData(media);
-    }
-  }, [media]);
+    EditionAPI.getAllEditions().then(setEditions).catch(() => setEditions([]));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,17 +47,28 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
     }
   };
 
-  const handleTvdbSelect = (result) => {
-    setFormData({
-      ...formData,
-      title: result.name || formData.title,
-      description: result.overview || formData.description,
-      year: result.year || formData.year,
-      image_url: result.imageUrl || formData.image_url,
-      tvdb_id: result.tvdbId || formData.tvdb_id,
-    });
+  const handleTvdbSelect = async (result) => {
+    setFormData((prev) => ({
+      ...prev,
+      title: result.name || prev.title,
+      description: result.overview || prev.description,
+      year: result.year || prev.year,
+      image_url: result.image_url || prev.image_url,
+      tvdb_id: result.tvdb_id || prev.tvdb_id,
+    }));
     setTvdbResults([]);
     setTvdbQuery('');
+
+    // Filme werden über die IMDb-ID identifiziert, TMDB liefert sie nur über einen Extra-Call
+    if (result.tmdb_id) {
+      try {
+        const imdbId = await TVDBAPI.getImdbId(result.tmdb_id);
+        setFormData((prev) => ({ ...prev, imdb_id: imdbId }));
+        if (!imdbId) setTvdbError('TMDB kennt für diesen Film keine IMDb-ID');
+      } catch (error) {
+        setTvdbError(error.message || 'IMDb-ID konnte nicht geladen werden');
+      }
+    }
   };
 
   const handleSubmit = (e) => {
@@ -74,7 +85,7 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
      return (
       <form className="media-form" onSubmit={handleSubmit}>
         <div className="tvdb-search-block">
-          <label>TVDB-Suche (optional)</label>
+          <label>Online-Suche (optional)</label>
           <div className="tvdb-search-row">
             <select value={tvdbType} onChange={(e) => setTvdbType(e.target.value)}>
               <option value="movie">Film</option>
@@ -97,11 +108,11 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
             <div className="tvdb-results">
               {tvdbResults.map((r) => (
                 <div
-                  key={r.tvdbId}
+                  key={r.tmdb_id || r.tvdb_id}
                   className="tvdb-result-item"
                   onClick={() => handleTvdbSelect(r)}
                 >
-                  {r.imageUrl && <img src={r.imageUrl} alt={r.name} />}
+                  {r.image_url && <img src={r.image_url} alt={r.name} />}
                   <div className="tvdb-result-info">
                     <strong>{r.name}</strong> {r.year ? `(${r.year})` : ''}
                     {r.overview && <p>{r.overview.slice(0, 120)}{r.overview.length > 120 ? '…' : ''}</p>}
@@ -137,6 +148,33 @@ export default function MediaForm({ media = null, onSubmit, onCancel }) {
               <option key={value} value={value}>
                 {MEDIA_TYPE_LABELS[value]}
               </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="imdb_id">IMDb-ID</label>
+          <input
+            type="text"
+            id="imdb_id"
+            name="imdb_id"
+            value={formData.imdb_id || ''}
+            onChange={handleChange}
+            placeholder="z.B. tt0133093"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="edition">Edition</label>
+          <select
+            id="edition"
+            name="edition"
+            value={formData.edition || ''}
+            onChange={handleChange}
+          >
+            <option value="">—</option>
+            {editions.map((e) => (
+              <option key={e.id} value={e.name}>{e.name}</option>
             ))}
           </select>
         </div>

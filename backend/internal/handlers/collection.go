@@ -22,12 +22,13 @@ type CollectionRequest struct {
 }
 
 type CollectionResponse struct {
-	ID          uint      `json:"id"`
-	UserID      uint      `json:"user_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          uint           `json:"id"`
+	UserID      uint           `json:"user_id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	Items       []ItemResponse `json:"items"`
 }
 
 func NewCollectionHandler(db *db.Database) *CollectionHandler {
@@ -127,7 +128,7 @@ func (h *CollectionHandler) UpdateCollection(c *gin.Context) {
 func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
 	id64, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		unauthorized(c)
+		badRequest(c, msgInvalidCollectionID)
 		return
 	}
 
@@ -135,6 +136,10 @@ func (h *CollectionHandler) GetCollectionByID(c *gin.Context) {
 	col, err := svc.GetCollectionByID(uint(id64))
 	if err != nil {
 		notFound(c, msgCollectionNotFound)
+		return
+	}
+	if col.UserID != c.GetUint("user_id") {
+		forbidden(c)
 		return
 	}
 	ok(c, newCollectionResponse(*col))
@@ -159,21 +164,18 @@ func (h *CollectionHandler) DeleteCollection(c *gin.Context) {
 }
 
 func newCollectionArrayResponse(c []models.Collection) []CollectionResponse {
-	collections := make([]CollectionResponse, len(c))
+	collections := make([]CollectionResponse, 0, len(c))
 	for _, col := range c {
-		collections = append(collections, CollectionResponse{
-			ID:          col.ID,
-			UserID:      col.UserID,
-			Name:        col.Name,
-			Description: col.Description,
-			CreatedAt:   col.CreatedAt,
-			UpdatedAt:   col.UpdatedAt,
-		})
+		collections = append(collections, newCollectionResponse(col))
 	}
 	return collections
 }
 
 func newCollectionResponse(c models.Collection) CollectionResponse {
+	items := make([]ItemResponse, 0, len(c.Items))
+	for _, i := range c.Items {
+		items = append(items, newItemResponse(i))
+	}
 	return CollectionResponse{
 		ID:          c.ID,
 		UserID:      c.UserID,
@@ -181,5 +183,6 @@ func newCollectionResponse(c models.Collection) CollectionResponse {
 		Description: c.Description,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
+		Items:       items,
 	}
 }

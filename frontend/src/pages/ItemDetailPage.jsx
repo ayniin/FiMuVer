@@ -12,7 +12,12 @@ const ItemDetailPage = ({ item, onNavigateBack }) => {
       </div>
 
       <div className="item-detail-body">
+        {item.image_url && <img className="item-detail-poster" src={item.image_url} alt={item.title} />}
         {item.media_type && <p><strong>Typ:</strong> {MEDIA_TYPE_LABELS[item.media_type]}</p>}
+        {item.edition && <p><strong>Edition:</strong> {item.edition}</p>}
+        {item.imdb_id && (
+          <p><strong>IMDb:</strong> <a href={`https://www.imdb.com/title/${item.imdb_id}/`} target="_blank" rel="noreferrer">{item.imdb_id}</a></p>
+        )}
         {item.artist && <p><strong>Künstler:</strong> {item.artist}</p>}
         {item.director && <p><strong>Regisseur:</strong> {item.director}</p>}
         {item.year && <p><strong>Jahr:</strong> {item.year}</p>}

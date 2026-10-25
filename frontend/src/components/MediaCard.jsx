@@ -2,15 +2,19 @@ import React from 'react';
 import { MEDIA_TYPE_LABELS, CONDITION_LABELS } from '../types';
 import './MediaCard.css';
 
-export default function MediaCard({ media, onEdit, onDelete }) {
+export default function MediaCard({ media, onOpen, onEdit, onDelete }) {
   return (
     <div className="media-card">
+      {media.image_url && (
+        <img className="media-card-poster" src={media.image_url} alt={media.title} onClick={onOpen} />
+      )}
       <div className="media-card-header">
-        <h3>{media.title}</h3>
+        <h3 onClick={onOpen} style={{ cursor: onOpen ? 'pointer' : undefined }}>{media.title}</h3>
         <span className="media-type-badge">{MEDIA_TYPE_LABELS[media.media_type]}</span>
       </div>
 
       <div className="media-card-body">
+        {media.edition && <p><strong>Edition:</strong> {media.edition}</p>}
         {media.artist && <p><strong>Künstler:</strong> {media.artist}</p>}
         {media.director && <p><strong>Regisseur:</strong> {media.director}</p>}
         {media.year && <p><strong>Jahr:</strong> {media.year}</p>}

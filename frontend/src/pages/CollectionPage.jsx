@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CollectionAPI from '../services/collection';
-import { addItemToCollection } from '../services/api';
+import { addItemToCollection, updateItem, deleteItem } from '../services/api';
 import MediaCard from '../components/MediaCard';
 import MediaForm from '../components/MediaForm';
 import Header from '../components/Header';
@@ -10,6 +10,7 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
     loadItems();
@@ -35,6 +36,26 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
       setShowForm(false);
     } catch (err) {
       setError(err.message || 'Fehler beim Erstellen des Eintrags');
+    }
+  };
+
+  const handleUpdateItem = async (formData) => {
+    try {
+      const updated = await updateItem(collection.id, editingItem.id, formData);
+      setItems(items.map((i) => (i.id === updated.id ? updated : i)));
+      setEditingItem(null);
+    } catch (err) {
+      setError(err.message || 'Fehler beim Aktualisieren des Eintrags');
+    }
+  };
+
+  const handleDeleteItem = async (item) => {
+    if (!confirm(`„${item.title}“ wirklich löschen?`)) return;
+    try {
+      await deleteItem(collection.id, item.id);
+      setItems(items.filter((i) => i.id !== item.id));
+    } catch (err) {
+      setError(err.message || 'Fehler beim Löschen des Eintrags');
     }
   };
 
@@ -65,6 +86,15 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
           />
         )}
 
+        {editingItem && (
+          <MediaForm
+            key={editingItem.id}
+            media={editingItem}
+            onSubmit={handleUpdateItem}
+            onCancel={() => setEditingItem(null)}
+          />
+        )}
+
         {loading && <div className="loading">Wird geladen...</div>}
 
         {!loading && items.length === 0 && !showForm && (
@@ -79,8 +109,9 @@ const CollectionPage = ({ collection, onNavigateToItem, onNavigateBack, user, on
               <MediaCard
                 key={item.id}
                 media={item}
-                onEdit={() => onNavigateToItem(item)}
-                onDelete={() => {}}
+                onOpen={() => onNavigateToItem(item)}
+                onEdit={() => { setShowForm(false); setEditingItem(item); }}
+                onDelete={() => handleDeleteItem(item)}
               />
             ))}
           </div>

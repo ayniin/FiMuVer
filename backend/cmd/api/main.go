@@ -72,6 +72,7 @@ func main() {
 	itemHandler := handlers.NewItemHandler(database)
 	inviteHandler := handlers.NewInviteHandler(database)
 	tvdbHandler := handlers.NewTVDBHandler(&cfg.TVDB)
+	tmdbHandler := handlers.NewTMDBHandler(&cfg.TMDB)
 
 	api := router.Group("/api/v1")
 	{
@@ -104,6 +105,7 @@ func main() {
 			collections.PUT("/:id", collectionHandler.UpdateCollection)
 			collections.DELETE("/:id", collectionHandler.DeleteCollection)
 			collections.POST("/:id/items", itemHandler.AddItem)
+			collections.PUT("/:id/items/:itemId", itemHandler.UpdateItem)
 			collections.DELETE("/:id/items/:itemId", itemHandler.DeleteItem)
 
 		}
@@ -118,7 +120,12 @@ func main() {
 		tvdb := secure.Group("/tvdb")
 		{
 			tvdb.GET("/search/series", tvdbHandler.SearchSeries)
-			tvdb.GET("/search/movies", tvdbHandler.SearchMovies)
+		}
+
+		tmdb := secure.Group("/tmdb")
+		{
+			tmdb.GET("/search/movies", tmdbHandler.SearchMovies)
+			tmdb.GET("/movies/:id/imdb", tmdbHandler.GetImdbID)
 		}
 
 		editions := secure.Group("/editions")

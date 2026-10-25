@@ -32,19 +32,3 @@ func (h *TVDBHandler) SearchSeries(c *gin.Context) {
 
 	ok(c, results)
 }
-
-func (h *TVDBHandler) SearchMovies(c *gin.Context) {
-	query := c.Query("q")
-	if query == "" {
-		badRequest(c, msgMissingQueryParam)
-		return
-	}
-
-	results, err := h.tvdbClient.SearchMovies(query)
-	if err != nil {
-		badGateway(c, msgTVDBUnavailable)
-		return
-	}
-
-	ok(c, results)
-}

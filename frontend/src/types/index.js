@@ -1,5 +1,6 @@
 // Medientypen
 export const MEDIA_TYPES = {
+  UHD: 'uhd',
   BLURAY: 'bluray',
   DVD: 'dvd',
   VINYL: 'vinyl',
@@ -7,6 +8,7 @@ export const MEDIA_TYPES = {
 };
 
 export const MEDIA_TYPE_LABELS = {
+  uhd: '4K UHD',
   bluray: 'Bluray',
   dvd: 'DVD',
   vinyl: 'Vinyl',
@@ -47,7 +49,9 @@ export class Media {
   condition = CONDITIONS.GOOD;
   location = '';
   notes = '';
-  tdb_id = '';
+  edition = '';
+  tvdb_id = '';
+  imdb_id = '';
   image_url = '';
   created_at = new Date();
   updated_at = new Date();
